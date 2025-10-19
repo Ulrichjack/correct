@@ -1,0 +1,2728 @@
+# 🎯 GUIDE COMPLET - APPLICATION EGO IA BLUE LOCK
+## Version Détaillée Étape par Étape avec Tests
+
+---
+
+## 📊 VUE D'ENSEMBLE DU PROJET
+
+**Ce qu'on va créer :**
+Une application intelligente où Ego Jinpachi (style Blue Lock) vous accompagne comme coach de développement personnel. Il suit vos statistiques, vous donne des missions, vous rappelle vos objectifs, analyse vos soumissions de code/projets et évolue avec vous.
+
+**Durée totale : 2-3 semaines (10-15 heures par semaine)**
+
+**Technologies utilisées :**
+- Backend : FastAPI (Python)
+- IA : Groq API (gratuit, 6000 requêtes/jour)
+- Base de données : SQLite (simple, pas de serveur)
+- Frontend : HTML/CSS/JavaScript (simple au début)
+- Hébergement : Render.com (gratuit)
+
+**Architecture globale :**
+```
+┌─────────────────────────────────────────┐
+│  FRONTEND (Interface Web)               │
+│  - Chat avec Ego                        │
+│  - Dashboard de stats                   │
+│  - Liste des missions                   │
+│  - Soumission de résultats              │
+└──────────────┬──────────────────────────┘
+               │ HTTP/WebSocket
+               ▼
+┌─────────────────────────────────────────┐
+│  BACKEND (FastAPI - Python)             │
+│  - API REST                             │
+│  - Gestion des sessions                 │
+│  - Logique métier                       │
+└──┬────────┬─────────┬──────────────────┘
+   │        │         │
+   ▼        ▼         ▼
+┌─────┐ ┌─────┐ ┌──────────┐
+│ DB  │ │Groq │ │Scheduler │
+│SQLite│ │ API │ │(Rappels) │
+└─────┘ └─────┘ └──────────┘
+```
+
+---
+
+# 📅 SEMAINE 1 : FONDATIONS ET BACKEND
+
+## JOUR 1 : INSTALLATION ET CONFIGURATION (2-3 heures)
+
+### 🎯 Objectif du jour
+Installer tous les outils nécessaires et créer la structure de base du projet.
+
+---
+
+### ✅ Étape 1.1 : Vérifier Python
+
+**Ce que tu dois faire :**
+1. Ouvrir le terminal/invite de commandes
+2. Taper : `python --version` ou `python3 --version`
+3. Vérifier que tu as Python 3.10 ou plus récent
+
+**Comment savoir que ça marche :**
+- Tu vois affiché : "Python 3.10.X" ou version supérieure
+- Si ce n'est pas le cas, télécharge Python depuis python.org
+
+**Pourquoi c'est important :**
+- FastAPI et les bibliothèques modernes nécessitent Python 3.10+
+- Les fonctionnalités async/await dont on a besoin sont dans cette version
+
+---
+
+### ✅ Étape 1.2 : Créer le dossier projet
+
+**Ce que tu dois faire :**
+1. Créer un dossier appelé "ego-ia-bluelock" sur ton ordinateur
+2. Ouvrir ce dossier dans ton éditeur de code (VSCode, PyCharm, etc.)
+
+**Commandes terminal :**
+```bash
+mkdir ego-ia-bluelock
+cd ego-ia-bluelock
+```
+
+**Comment savoir que ça marche :**
+- Le dossier existe et est ouvert dans ton éditeur
+- Ton terminal est positionné dans ce dossier (tu vois le nom dans le chemin)
+
+---
+
+### ✅ Étape 1.3 : Créer environnement virtuel Python
+
+**Ce que tu dois faire :**
+Créer un environnement isolé pour ton projet.
+
+**Commandes selon ton système :**
+
+**Windows :**
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+**Mac/Linux :**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+**Comment savoir que ça marche :**
+- Un dossier "venv" apparaît dans ton projet
+- Tu vois "(venv)" au début de ta ligne de commande
+- Exemple : `(venv) C:\ego-ia-bluelock>`
+
+**Pourquoi c'est important :**
+- Isole ton projet des autres projets Python
+- Évite les conflits de versions de bibliothèques
+- Facilite le déploiement
+
+**Problèmes courants :**
+- Si "python" ne marche pas, essaie "python3"
+- Si activation échoue sur Windows, ouvre PowerShell en admin et tape :
+  ```bash
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+
+---
+
+### ✅ Étape 1.4 : Créer la structure des dossiers
+
+**Ce que tu dois faire :**
+Créer l'arborescence complète du projet.
+
+**Structure à créer :**
+```
+ego-ia-bluelock/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   └── dependencies.py
+│   └── services/
+│       ├── __init__.py
+│       ├── ai_service.py
+│       ├── stats_service.py
+│       ├── mission_service.py
+│       └── notification_service.py
+├── frontend/
+│   ├── index.html
+│   ├── styles.css
+│   ├── app.js
+│   └── assets/
+├── uploads/
+│   ├── screenshots/
+│   └── files/
+├── tests/
+│   ├── __init__.py
+│   ├── test_api.py
+│   └── test_services.py
+├── .env
+├── .gitignore
+├── requirements.txt
+├── README.md
+└── run.py
+```
+
+**Commandes pour créer rapidement (Linux/Mac) :**
+```bash
+mkdir -p app/api app/services frontend/assets uploads/screenshots uploads/files tests
+touch app/__init__.py app/main.py app/config.py app/database.py
+touch app/models.py app/schemas.py
+touch app/api/__init__.py app/api/routes.py app/api/dependencies.py
+touch app/services/__init__.py app/services/ai_service.py
+touch app/services/stats_service.py app/services/mission_service.py
+touch app/services/notification_service.py
+touch frontend/index.html frontend/styles.css frontend/app.js
+touch tests/__init__.py tests/test_api.py tests/test_services.py
+touch .env .gitignore requirements.txt README.md run.py
+```
+
+**Sur Windows (PowerShell) :**
+Créer les dossiers et fichiers un par un via l'explorateur ou l'éditeur de code.
+
+**Comment savoir que ça marche :**
+- Tu vois tous ces dossiers et fichiers dans ton éditeur
+- La structure est identique au schéma ci-dessus
+
+**Pourquoi cette structure :**
+- `app/` : tout le code backend
+- `app/api/` : routes et endpoints de l'API
+- `app/services/` : logique métier (IA, stats, missions)
+- `frontend/` : interface utilisateur
+- `uploads/` : fichiers uploadés par l'utilisateur
+- `tests/` : tests automatisés
+
+---
+
+### ✅ Étape 1.5 : Créer requirements.txt
+
+**Ce que tu dois faire :**
+Lister toutes les bibliothèques Python nécessaires.
+
+**Contenu du fichier `requirements.txt` :**
+```txt
+# Framework web
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Base de données
+sqlalchemy==2.0.23
+aiosqlite==0.19.0
+
+# IA et API externe
+groq==0.4.1
+
+# Validation de données
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Upload de fichiers
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# Variables d'environnement
+python-dotenv==1.0.0
+
+# Scheduler pour rappels
+apscheduler==3.10.4
+
+# Sécurité
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Utils
+python-dateutil==2.8.2
+```
+
+**Ce que tu dois faire :**
+1. Ouvrir le fichier requirements.txt
+2. Copier-coller le contenu ci-dessus
+3. Sauvegarder
+
+**Comment savoir que ça marche :**
+- Le fichier existe à la racine du projet
+- Il contient exactement ces lignes
+
+**Pourquoi ces bibliothèques :**
+- **fastapi** : framework web moderne et rapide
+- **uvicorn** : serveur ASGI pour FastAPI
+- **sqlalchemy** : ORM pour gérer la base de données
+- **groq** : client API pour l'IA Groq
+- **pydantic** : validation automatique des données
+- **apscheduler** : pour les rappels automatiques
+- **aiofiles** : gestion asynchrone des fichiers
+
+---
+
+### ✅ Étape 1.6 : Installer les dépendances
+
+**Ce que tu dois faire :**
+Installer toutes les bibliothèques listées dans requirements.txt.
+
+**Commande :**
+```bash
+pip install -r requirements.txt
+```
+
+**Ce qui va se passer :**
+- Plein de lignes défilent dans le terminal
+- Chaque bibliothèque est téléchargée et installée
+- Ça prend 3-5 minutes
+
+**Comment savoir que ça marche :**
+- Tu vois à la fin : "Successfully installed..." suivi de la liste des packages
+- Aucune erreur rouge
+- La commande se termine sans problème
+
+**Problèmes courants :**
+- **"pip not found"** : vérifie que venv est activé
+- **Erreur de compilation** : installe les outils de build
+  - Windows : Visual Studio Build Tools
+  - Mac : Xcode Command Line Tools (`xcode-select --install`)
+  - Linux : `sudo apt-get install build-essential`
+
+---
+
+### ✅ Étape 1.7 : Obtenir la clé API Groq
+
+**Ce que tu dois faire :**
+Créer un compte Groq et obtenir ta clé API gratuite.
+
+**Étapes détaillées :**
+1. Aller sur https://console.groq.com
+2. Cliquer sur "Sign Up" ou "Get Started"
+3. Créer un compte avec ton email
+4. Vérifier ton email et te connecter
+5. Dans le dashboard, aller dans "API Keys"
+6. Cliquer sur "Create API Key"
+7. Donner un nom à la clé (ex: "ego-ia-dev")
+8. Copier la clé (elle commence par "gsk_...")
+
+**TRÈS IMPORTANT :**
+- Copie immédiatement la clé dans un fichier temporaire
+- Tu ne pourras plus la revoir après avoir fermé la popup
+- Ne la partage JAMAIS publiquement
+
+**Comment savoir que ça marche :**
+- Tu as une clé qui ressemble à : `gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+- Elle fait environ 50-60 caractères
+
+**Limites gratuites de Groq :**
+- 6000 requêtes par jour (largement suffisant)
+- Modèles disponibles : Llama 3.1, Mixtral, Gemma
+- Très rapide (plus rapide que GPT)
+
+---
+
+### ✅ Étape 1.8 : Créer le fichier .env
+
+**Ce que tu dois faire :**
+Créer un fichier pour stocker les variables sensibles.
+
+**Contenu du fichier `.env` :**
+```env
+# API Keys
+GROQ_API_KEY=gsk_votre_cle_ici_remplacer
+
+# Database
+DATABASE_URL=sqlite+aiosqlite:///./ego_bluelock.db
+
+# Security
+SECRET_KEY=votre_secret_key_random_changez_moi
+
+# App Config
+APP_NAME=Ego IA Blue Lock
+DEBUG=True
+ENVIRONMENT=development
+
+# AI Config
+AI_MODEL=llama-3.1-70b-versatile
+AI_TEMPERATURE=0.3
+MAX_TOKENS=1000
+
+# Server
+HOST=0.0.0.0
+PORT=8000
+```
+
+**Ce que tu dois modifier :**
+1. Remplacer `gsk_votre_cle_ici_remplacer` par ta vraie clé Groq
+2. Remplacer `votre_secret_key_random_changez_moi` par une chaîne aléatoire
+   - Pour générer une clé secrète sécurisée, utilise :
+   ```python
+   import secrets
+   print(secrets.token_urlsafe(32))
+   ```
+
+**Comment savoir que ça marche :**
+- Le fichier .env existe à la racine du projet
+- Il contient ta vraie clé Groq
+- Les valeurs sont correctement formatées (pas de guillemets)
+
+**Pourquoi c'est important :**
+- Sépare les secrets du code
+- Facilite le changement de configuration
+- Sécurise tes clés API
+
+**ATTENTION :**
+- Ne jamais commit le .env sur Git
+- Ajouter .env dans .gitignore
+
+---
+
+### ✅ Étape 1.9 : Créer le fichier .gitignore
+
+**Ce que tu dois faire :**
+Empêcher certains fichiers d'être versionnés sur Git.
+
+**Contenu du fichier `.gitignore` :**
+```gitignore
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/
+!uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Tests
+.coverage
+htmlcov/
+.pytest_cache/
+```
+
+**Comment savoir que ça marche :**
+- Le fichier .gitignore existe
+- Git ignore automatiquement les fichiers listés
+
+**Pourquoi c'est important :**
+- Protège tes secrets (.env)
+- Évite de commit des fichiers temporaires
+- Réduit la taille du dépôt
+
+---
+
+### ✅ Étape 1.10 : Test d'installation
+
+**Ce que tu dois faire :**
+Vérifier que tout est correctement installé.
+
+**Commandes de test :**
+```bash
+# Vérifier que Python trouve FastAPI
+python -c "import fastapi; print('FastAPI OK')"
+
+# Vérifier que Groq est installé
+python -c "import groq; print('Groq OK')"
+
+# Vérifier que SQLAlchemy est installé
+python -c "import sqlalchemy; print('SQLAlchemy OK')"
+
+# Vérifier la version de Python
+python --version
+```
+
+**Comment savoir que ça marche :**
+- Chaque commande affiche "XXX OK"
+- Aucune erreur "ModuleNotFoundError"
+- Python version 3.10+
+
+**Si un import échoue :**
+1. Vérifie que venv est activé (tu vois "(venv)")
+2. Réinstalle : `pip install -r requirements.txt`
+3. Redémarre ton terminal
+
+---
+
+### ✅ Étape 1.11 : Créer README.md
+
+**Ce que tu dois faire :**
+Documenter ton projet pour toi et les autres.
+
+**Contenu du fichier `README.md` :**
+```markdown
+# 🎯 Ego IA Blue Lock
+
+Application intelligente de coaching de développement inspirée de Blue Lock.
+
+## 📋 Fonctionnalités
+
+- 🤖 IA avec personnalité Ego Jinpachi
+- 📊 Suivi de statistiques en temps réel
+- 🎯 Système de missions et objectifs
+- ⏰ Rappels automatiques
+- 📈 Analyse de vos soumissions
+- 🏆 Gamification et progression
+
+## 🚀 Installation
+
+1. Cloner le projet
+2. Créer un environnement virtuel : `python -m venv venv`
+3. Activer l'environnement : `source venv/bin/activate` (Mac/Linux) ou `venv\Scripts\activate` (Windows)
+4. Installer les dépendances : `pip install -r requirements.txt`
+5. Créer un fichier `.env` avec ta clé Groq API
+6. Lancer l'application : `python run.py`
+
+## 🔑 Configuration
+
+Copier `.env.example` vers `.env` et configurer :
+- GROQ_API_KEY : ta clé API Groq
+- SECRET_KEY : une clé secrète aléatoire
+
+## 📚 Technologies
+
+- Backend : FastAPI (Python)
+- IA : Groq API
+- Base de données : SQLite
+- Frontend : HTML/CSS/JavaScript
+
+## 👤 Auteur
+
+Votre nom
+```
+
+**Comment savoir que ça marche :**
+- Le fichier README.md existe à la racine
+- Il explique clairement le projet
+
+---
+
+## JOUR 2 : CONFIGURATION ET MODÈLES DE DONNÉES (4-5 heures)
+
+### 🎯 Objectif du jour
+Créer la configuration de l'application et définir la structure de la base de données.
+
+---
+
+### ✅ Étape 2.1 : Créer app/config.py
+
+**Ce que ce fichier doit faire :**
+- Charger les variables du fichier .env
+- Fournir une configuration centralisée
+- Valider les variables d'environnement
+
+**Contenu attendu :**
+1. Une classe `Settings` qui hérite de `BaseSettings` (Pydantic)
+2. Définition de toutes les variables d'environnement :
+   - `groq_api_key` : la clé API Groq
+   - `database_url` : URL de connexion SQLite
+   - `secret_key` : clé pour sécurité
+   - `app_name`, `debug`, `environment`
+   - `ai_model`, `ai_temperature`, `max_tokens`
+3. Une fonction `get_settings()` avec cache (`@lru_cache`)
+
+**Comment écrire ce fichier :**
+1. Importer `BaseSettings` de `pydantic_settings`
+2. Importer `lru_cache` de `functools`
+3. Créer la classe avec tous les attributs
+4. Ajouter `class Config` avec `env_file = ".env"`
+5. Créer la fonction getter avec décorateur cache
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/
+- Tu peux l'importer sans erreur : `from app.config import get_settings`
+- `get_settings().groq_api_key` retourne ta clé
+
+**Test rapide :**
+```bash
+python -c "from app.config import get_settings; print(get_settings().app_name)"
+```
+Devrait afficher : "Ego IA Blue Lock"
+
+---
+
+### ✅ Étape 2.2 : Créer app/models.py (Modèles de base de données)
+
+**Ce que ce fichier doit faire :**
+Définir la structure des tables de la base de données.
+
+**Tables à créer :**
+
+**1. Table User (Utilisateur) :**
+- id : identifiant unique (entier, clé primaire)
+- username : nom d'utilisateur (texte, unique)
+- created_at : date de création (datetime)
+- niveau : niveau Blue Lock (entier, défaut 0)
+- total_points : points accumulés (entier, défaut 0)
+- projets_termines : nombre de projets finis (entier, défaut 0)
+- streak_actuel : série de jours consécutifs (entier, défaut 0)
+- meilleur_streak : record de streak (entier, défaut 0)
+- derniere_activite : dernière connexion (datetime)
+- competences : liste de compétences débloquées (texte JSON)
+
+**2. Table Mission :**
+- id : identifiant unique
+- user_id : référence à User (clé étrangère)
+- titre : nom de la mission (texte)
+- description : détails (texte)
+- points_recompense : points à gagner (entier)
+- statut : active/completed/failed (texte)
+- deadline : date limite (datetime, optionnel)
+- created_at : date de création (datetime)
+- completed_at : date de complétion (datetime, optionnel)
+
+**3. Table Conversation :**
+- id : identifiant unique
+- user_id : référence à User (clé étrangère)
+- message_user : message de l'utilisateur (texte)
+- reponse_ego : réponse d'Ego (texte)
+- timestamp : horodatage (datetime)
+- contexte : contexte de la conversation (texte JSON)
+
+**4. Table Soumission :**
+- id : identifiant unique
+- user_id : référence à User (clé étrangère)
+- mission_id : référence à Mission (clé étrangère, optionnel)
+- titre : titre de la soumission (texte)
+- description : description (texte)
+- fichier_path : chemin du fichier uploadé (texte, optionnel)
+- lien_github : lien GitHub (texte, optionnel)
+- note_ego : note donnée par Ego (float, optionnel)
+- commentaire_ego : feedback d'Ego (texte, optionnel)
+- validee : si acceptée ou non (booléen)
+- created_at : date de création (datetime)
+
+**Comment écrire ce fichier :**
+1. Importer SQLAlchemy :
+   - `Column, Integer, String, Float, DateTime, Boolean, Text, ForeignKey`
+   - `declarative_base, relationship`
+2. Créer `Base = declarative_base()`
+3. Créer chaque classe qui hérite de `Base`
+4. Définir `__tablename__` pour chaque table
+5. Ajouter les colonnes avec leurs types
+6. Définir les relations (User a plusieurs Missions, etc.)
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/
+- Tu peux l'importer : `from app.models import User, Mission`
+- Aucune erreur de syntaxe
+
+**Pourquoi ces tables :**
+- **User** : stocke toutes les stats du joueur
+- **Mission** : objectifs assignés par Ego
+- **Conversation** : historique du chat pour contexte
+- **Soumission** : résultats envoyés par l'utilisateur
+
+---
+
+### ✅ Étape 2.3 : Créer app/schemas.py (Validation des données)
+
+**Ce que ce fichier doit faire :**
+Définir les schémas Pydantic pour valider les données reçues et envoyées par l'API.
+
+**Schémas à créer :**
+
+**Pour User :**
+- `UserCreate` : pour créer un utilisateur (username)
+- `UserResponse` : pour retourner un utilisateur (tous les champs sauf sensibles)
+- `UserStats` : pour les statistiques (niveau, points, projets, etc.)
+
+**Pour Mission :**
+- `MissionCreate` : créer une mission (titre, description, points, deadline)
+- `MissionUpdate` : mettre à jour une mission (statut, completed_at)
+- `MissionResponse` : retourner une mission complète
+
+**Pour Conversation :**
+- `MessageRequest` : message envoyé par l'user (message_user)
+- `MessageResponse` : réponse avec message Ego
+
+**Pour Soumission :**
+- `SoumissionCreate` : créer une soumission (titre, description, fichier, lien)
+- `SoumissionResponse` : retourner avec évaluation d'Ego
+
+**Comment écrire ce fichier :**
+1. Importer `BaseModel, Field, validator` de `pydantic`
+2. Importer `datetime, Optional`
+3. Créer chaque classe héritant de `BaseModel`
+4. Définir les champs avec leurs types
+5. Ajouter `Config` avec `from_attributes = True` pour compatibilité ORM
+6. Ajouter des validateurs si nécessaire (ex: username > 3 caractères)
+
+**Exemple de structure :**
+```
+class UserCreate(BaseModel):
+    username: str = Field(min_length=3, max_length=50)
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    niveau: int
+    total_points: int
+    projets_termines: int
+    streak_actuel: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/
+- Tu peux l'importer : `from app.schemas import UserCreate`
+- Pydantic valide automatiquement les données
+
+---
+
+### ✅ Étape 2.4 : Créer app/database.py
+
+**Ce que ce fichier doit faire :**
+Gérer la connexion à la base de données SQLite.
+
+**Fonctions à créer :**
+
+**1. Configuration du moteur :**
+- Créer le moteur async SQLAlchemy avec l'URL depuis config
+- Activer le mode `echo` si DEBUG=True (pour voir les requêtes SQL)
+
+**2. SessionMaker :**
+- Créer un `async_session_maker` pour obtenir des sessions
+- Configuration : `expire_on_commit=False`
+
+**3. Fonction `get_db()` :**
+- Dependency FastAPI qui fournit une session de DB
+- Utilise `yield` pour donner la session
+- Ferme automatiquement la session après usage
+
+**4. Fonction `init_db()` :**
+- Crée toutes les tables définies dans models.py
+- À appeler au démarrage de l'application
+- Affiche un message de confirmation
+
+**Comment écrire ce fichier :**
+1. Importer `create_async_engine, AsyncSession` de SQLAlchemy
+2. Importer `sessionmaker`
+3. Importer `get_settings` et `Base` des modèles
+4. Créer le moteur avec `create_async_engine(settings.database_url)`
+5. Créer le sessionmaker
+6. Définir `get_db()` comme fonction async generator
+7. Définir `init_db()` qui crée les tables
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/
+- Tu peux l'importer sans erreur
+- La fonction `init_db()` crée le fichier .db
+
+**Test rapide :**
+Créer un fichier test `test_db.py` :
+```python
+import asyncio
+from app.database import init_db
+
+asyncio.run(init_db())
+```
+
+Lancer : `python test_db.py`
+- Tu dois voir : "✅ Base de données initialisée !"
+- Un fichier `ego_bluelock.db` apparaît à la racine
+
+---
+
+### ✅ Étape 2.5 : Tester la création de la base de données
+
+**Ce que tu dois faire :**
+Vérifier que la base de données se crée correctement.
+
+**Test manuel :**
+1. Créer un fichier `init_database.py` à la racine
+2. Contenu :
+```python
+import asyncio
+from app.database import init_db
+
+async def main():
+    print("🔄 Initialisation de la base de données...")
+    await init_db()
+    print("✅ Terminé ! Fichier .db créé.")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+3. Lancer : `python init_database.py`
+
+**Comment savoir que ça marche :**
+- Tu vois les messages de confirmation
+- Un fichier `ego_bluelock.db` apparaît à la racine du projet
+- Aucune erreur
+
+**Inspection de la base (optionnel) :**
+- Installer DB Browser for SQLite (logiciel gratuit)
+- Ouvrir le fichier .db
+- Tu dois voir 4 tables : users, missions, conversations, soumissions
+- Chaque table a les colonnes définies dans models.py
+
+**Problèmes courants :**
+- **"Table already exists"** : normal si tu relances, les tables existent déjà
+- **Erreur de connexion** : vérifie DATABASE_URL dans .env
+- **Import error** : vérifie que tous les fichiers sont bien créés
+
+---
+
+## JOUR 3 : SERVICE IA AVEC GROQ (5-6 heures)
+
+### 🎯 Objectif du jour
+Créer le service qui communique avec l'API Groq et gère la personnalité d'Ego.
+
+---
+
+### ✅ Étape 3.1 : Comprendre l'API Groq
+
+**Ce que tu dois savoir :**
+
+**Modèles disponibles :**
+- `llama-3.1-70b-versatile` : le plus intelligent (recommandé)
+- `llama-3.1-8b-instant` : plus rapide, moins intelligent
+- `mixtral-8x7b-32768` : bon compromis
+- `gemma2-9b-it` : léger et rapide
+
+**Structure d'un appel API :**
+```
+Client Groq → Envoie un prompt avec:
+   - messages (liste de dicts avec role et content)
+   - model (le modèle à utiliser)
+   - temperature (créativité, 0-1)
+   - max_tokens (longueur max réponse)
+
+API Groq → Retourne:
+   - choices[0].message.content (la réponse)
+```
+
+**Les roles dans les messages :**
+- `system` : instructions pour l'IA (c'est Ego, parle comme...)
+- `user` : message de l'utilisateur
+- `assistant` : réponse de l'IA (pour historique)
+
+**Exemple conceptuel :**
+```
+messages = [
+    {"role": "system", "content": "Tu es Ego Jinpachi..."},
+    {"role": "user", "content": "Comment progresser ?"},
+]
+```
+
+---
+
+### ✅ Étape 3.2 : Créer app/services/ai_service.py
+
+**Ce que ce fichier doit faire :**
+Gérer toutes les interactions avec Groq API et la personnalité d'Ego.
+
+**Fonctions à créer :**
+
+**1. Fonction `construire_prompt_systeme(user_stats: dict) -> str` :**
+
+**Ce qu'elle doit faire :**
+- Prendre en paramètre les stats de l'utilisateur
+- Construire le prompt système qui définit Ego
+- Injecter les stats dans le prompt
+- Retourner le prompt complet
+
+**Contenu du prompt :**
+```
+Tu es Ego Jinpachi, le coach impitoyable de Blue Lock.
+Tu entraînes {username} à devenir un développeur d'élite.
+
+RÈGLES ABSOLUES :
+- Parle comme Ego : direct, provocateur, mais juste
+- Utilise "Tch", "Hmph", "Pathétique" souvent
+- Compare toujours avec d'autres joueurs fictifs (Bachira, Isagi, Nagi)
+- Crée une compétition constante
+- Reconnaît les progrès MAIS garde la pression
+- Vocabulaire Blue Lock : "égoïste", "médiocre", "arme", "survie", "élimination"
+- Jamais trop encourageant, toujours challenge
+
+STATS ACTUELLES DE {username} :
+- Niveau : {niveau}
+- Points totaux : {total_points}
+- Projets terminés : {projets_termines}
+- Streak actuel : {streak_actuel} jours
+- Meilleur streak : {meilleur_streak} jours
+- Compétences : {competences}
+
+COMPORTEMENT SELON NIVEAU :
+- Niveau 0-2 : Très dur, presque méprisant, "t'es même pas digne de Blue Lock"
+- Niveau 3-5 : Reconnaît progrès mais pousse plus fort
+- Niveau 6-8 : Respect gagné, défis plus ambitieux
+- Niveau 9+ : Elite, mais doit maintenir son rang
+
+RÉACTIONS SELON CONTEXTE :
+- Si streak cassé : Déçu mais remotivant, "c'est ça qui sépare les égoïstes des médiocres"
+- Si nouvel accomplissement : Félicite à sa manière, "Hmph, pas mal"
+- Si échec/blocage : Provoque pour débloquer, "tu vas abandonner comme ça ?"
+- Si demande d'aide : Donne des pistes mais force à chercher
+
+Réponds TOUJOURS en français avec ton style unique.
+Sois concis (max 150 mots par réponse).
+```
+
+**Comment l'écrire :**
+- Utiliser des f-strings Python pour injecter les variables
+- Formater proprement (indentation)
+- Tester avec différentes stats
+
+**2. Fonction `obtenir_reponse_ego(message: str, user_stats: dict, historique: list = None) -> dict` :**
+
+**Ce qu'elle doit faire :**
+- Prendre le message de l'utilisateur
+- Prendre les stats actuelles
+- Prendre l'historique des messages (optionnel)
+- Construire le prompt système
+- Appeler l'API Groq
+- Retourner la réponse d'Ego
+
+**Étapes :**
+1. Importer et initialiser le client Groq avec la clé API
+2. Construire le prompt système avec `construire_prompt_systeme()`
+3. Construire la liste des messages :
+   - Ajouter le message system
+   - Ajouter l'historique si présent (limité aux 10 derniers)
+   - Ajouter le message actuel de l'user
+4. Appeler `client.chat.completions.create()` avec :
+   - model : depuis config
+   - messages : la liste construite
+   - temperature : depuis config (0.3 pour cohérence)
+   - max_tokens : depuis config
+5. Extraire la réponse
+6. Retourner un dict avec :
+   - `reponse` : le texte de la réponse
+   - `tokens_used` : nombre de tokens utilisés
+   - `model_used` : modèle utilisé
+
+**Gestion d'erreurs :**
+- Wrappe dans try/except
+- Si erreur API : retourne une réponse par défaut d'Ego du genre "Tch, problème technique. Reviens plus tard."
+- Log l'erreur pour debug
+
+**3. Fonction `analyser_soumission(titre: str, description: str, user_stats: dict) -> dict` :**
+
+**Ce qu'elle doit faire :**
+- Analyser une soumission de l'utilisateur (projet, code, etc.)
+- Donner une note sur 10
+- Donner un feedback détaillé style Ego
+- Suggérer des améliorations
+
+**Prompt spécifique pour cette fonction :**
+```
+Tu es Ego Jinpachi et tu évalues la soumission d'un développeur.
+
+SOUMISSION :
+Titre : {titre}
+Description : {description}
+
+STATS DU DÉVELOPPEUR :
+{stats de l'user}
+
+TÂCHE :
+1. Analyse la soumission
+2. Donne une note sur 10 (sois exigeant mais juste)
+3. Catégorise : ELITE (9-10), BON (7-8), MOYEN (5-6), FAIBLE (1-4)
+4. Donne un feedback dans ton style (max 100 mots)
+5. Suggère 2-3 améliorations concrètes
+
+RETOURNE UN JSON :
+{
+  "note": 7.5,
+  "categorie": "BON",
+  "feedback": "Hmph, pas mal pour ton niveau...",
+  "ameliorations": ["...", "...", "..."],
+  "points_gagnes": 50
+}
+```
+
+**Étapes :**
+1. Construire ce prompt avec les données
+2. Appeler Groq API
+3. Parser la réponse JSON
+4. Valider les champs
+5. Retourner le dict
+
+**4. Fonction `generer_mission(user_stats: dict, difficulte: str = "normale") -> dict` :**
+
+**Ce qu'elle doit faire :**
+- Générer une mission adaptée au niveau de l'utilisateur
+- Difficulté : facile, normale, difficile
+- Mission cohérente avec ses compétences actuelles
+
+**Prompt :**
+```
+Tu es Ego Jinpachi. Crée une mission de développement pour {username}.
+
+STATS :
+- Niveau : {niveau}
+- Compétences : {competences}
+- Projets terminés : {projets_termines}
+
+DIFFICULTÉ DEMANDÉE : {difficulte}
+
+CONTRAINTES :
+- Mission réalisable en 1-7 jours selon difficulté
+- Adaptée au niveau actuel
+- Challenge mais pas impossible
+- Technologie que l'user connaît ou peut apprendre
+
+RETOURNE UN JSON :
+{
+  "titre": "...",
+  "description": "... (style Ego, 50 mots max)",
+  "objectifs": ["...", "...", "..."],
+  "duree_estimee": "3 jours",
+  "points_recompense": 100,
+  "competences_requises": ["...", "..."]
+}
+```
+
+**Étapes similaires :**
+- Construire prompt
+- Appeler API
+- Parser JSON
+- Valider
+- Retourner
+
+**Comment écrire ce fichier :**
+
+**Imports nécessaires :**
+```python
+from groq import Groq
+from app.config import get_settings
+import json
+import logging
+from typing import Optional, List, Dict
+```
+
+**Structure du fichier :**
+```python
+settings = get_settings()
+client = Groq(api_key=settings.groq_api_key)
+logger = logging.getLogger(__name__)
+
+# Fonction 1: construire_prompt_systeme()
+# Fonction 2: obtenir_reponse_ego()
+# Fonction 3: analyser_soumission()
+# Fonction 4: generer_mission()
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/services/
+- Tu peux l'importer sans erreur
+- Chaque fonction a une docstring expliquant son rôle
+
+---
+
+### ✅ Étape 3.3 : Tester le service IA manuellement
+
+**Ce que tu dois faire :**
+Créer un script de test pour vérifier que l'IA répond correctement.
+
+**Créer `test_ai.py` à la racine :**
+
+**Contenu du fichier :**
+```python
+import asyncio
+from app.services.ai_service import (
+    obtenir_reponse_ego,
+    analyser_soumission,
+    generer_mission
+)
+
+async def test_reponse_simple():
+    """Test 1: Conversation simple"""
+    print("\n🧪 TEST 1: Conversation simple")
+    print("-" * 50)
+
+    user_stats = {
+        "username": "TestUser",
+        "niveau": 3,
+        "total_points": 150,
+        "projets_termines": 5,
+        "streak_actuel": 2,
+        "meilleur_streak": 7,
+        "competences": ["Python", "FastAPI"]
+    }
+
+    message = "Comment progresser en Python ?"
+
+    resultat = obtenir_reponse_ego(message, user_stats)
+
+    print(f"📩 Message: {message}")
+    print(f"🤖 Réponse Ego: {resultat['reponse']}")
+    print(f"📊 Tokens utilisés: {resultat['tokens_used']}")
+
+async def test_analyse_soumission():
+    """Test 2: Analyse de soumission"""
+    print("\n🧪 TEST 2: Analyse de soumission")
+    print("-" * 50)
+
+    user_stats = {
+        "username": "TestUser",
+        "niveau": 4,
+        "total_points": 200,
+        "projets_termines": 8,
+        "streak_actuel": 5,
+        "meilleur_streak": 10,
+        "competences": ["Python", "FastAPI", "SQLite"]
+    }
+
+    titre = "API REST pour gestion de tâches"
+    description = """
+    J'ai créé une API REST avec FastAPI qui permet de :
+    - Créer des tâches
+    - Les lister
+    - Les marquer comme complétées
+    - Base de données SQLite
+    - Documentation Swagger auto-générée
+    """
+
+    resultat = analyser_soumission(titre, description, user_stats)
+
+    print(f"📝 Soumission: {titre}")
+    print(f"⭐ Note: {resultat['note']}/10")
+    print(f"🏷️ Catégorie: {resultat['categorie']}")
+    print(f"💬 Feedback: {resultat['feedback']}")
+    print(f"📈 Améliorations:")
+    for i, amelioration in enumerate(resultat['ameliorations'], 1):
+        print(f"   {i}. {amelioration}")
+    print(f"🎁 Points gagnés: {resultat['points_gagnes']}")
+
+async def test_generation_mission():
+    """Test 3: Génération de mission"""
+    print("\n🧪 TEST 3: Génération de mission")
+    print("-" * 50)
+
+    user_stats = {
+        "username": "TestUser",
+        "niveau": 5,
+        "total_points": 350,
+        "projets_termines": 12,
+        "streak_actuel": 8,
+        "meilleur_streak": 15,
+        "competences": ["Python", "FastAPI", "SQLite", "HTML/CSS"]
+    }
+
+    resultat = generer_mission(user_stats, difficulte="normale")
+
+    print(f"🎯 Mission: {resultat['titre']}")
+    print(f"📋 Description: {resultat['description']}")
+    print(f"✅ Objectifs:")
+    for i, obj in enumerate(resultat['objectifs'], 1):
+        print(f"   {i}. {obj}")
+    print(f"⏱️ Durée estimée: {resultat['duree_estimee']}")
+    print(f"🎁 Points récompense: {resultat['points_recompense']}")
+    print(f"🛠️ Compétences requises: {', '.join(resultat['competences_requises'])}")
+
+async def main():
+    """Lancer tous les tests"""
+    print("=" * 50)
+    print("🚀 TESTS DU SERVICE IA")
+    print("=" * 50)
+
+    try:
+        await test_reponse_simple()
+        await test_analyse_soumission()
+        await test_generation_mission()
+
+        print("\n" + "=" * 50)
+        print("✅ TOUS LES TESTS ONT RÉUSSI !")
+        print("=" * 50)
+
+    except Exception as e:
+        print(f"\n❌ ERREUR: {e}")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+**Comment lancer les tests :**
+```bash
+python test_ai.py
+```
+
+**Ce que tu dois voir :**
+- Chaque test s'exécute séquentiellement
+- Tu vois les réponses d'Ego en français
+- Le style est bien celui de Blue Lock (provocateur, comparaisons)
+- Les notes et missions sont cohérentes
+- Aucune erreur
+
+**Comment savoir que ça marche :**
+- ✅ Test 1 : Ego répond en français avec sa personnalité
+- ✅ Test 2 : La soumission est analysée avec note et feedback
+- ✅ Test 3 : Une mission est générée adaptée au niveau
+- ✅ Aucune erreur API
+- ✅ Les tokens sont comptés
+
+**Problèmes courants :**
+- **"Invalid API key"** : vérifie GROQ_API_KEY dans .env
+- **Timeout** : connexion internet lente, augmente le timeout
+- **Réponse en anglais** : ajoute "Réponds UNIQUEMENT en français" dans le prompt
+- **Erreur JSON** : l'IA n'a pas retourné un JSON valide, améliore le prompt
+
+**Améliorations à tester :**
+- Change les stats (niveau 0 vs niveau 10) et vois la différence de ton
+- Teste avec différents types de soumissions
+- Teste avec différentes difficultés de mission
+
+---
+
+### ✅ Étape 3.4 : Optimiser les prompts
+
+**Ce que tu dois faire :**
+Affiner les prompts pour avoir des réponses plus cohérentes.
+
+**Techniques d'optimisation :**
+
+**1. Ajouter des exemples (Few-shot learning) :**
+
+Dans le prompt système, ajouter :
+```
+EXEMPLES DE RÉPONSES :
+
+User: "J'ai réussi mon premier projet"
+Ego: "Hmph, UN projet ? Bachira en fait trois par semaine.
+Mais pour un débutant niveau 2, c'est pas totalement pathétique.
+Continue comme ça et tu survivras peut-être dans Blue Lock."
+
+User: "Je suis bloqué sur ce bug"
+Ego: "Bloqué ? Les vrais égoïstes DÉVORENT les bugs.
+Isagi a debuggé pendant 12h d'affilée sur son dernier projet.
+Montre-moi ce bug. On va l'écraser ensemble."
+```
+
+**2. Contraintes strictes :**
+
+Ajouter dans chaque prompt :
+```
+CONTRAINTES STRICTES :
+- Longueur max : 150 mots
+- Toujours finir par une action ou question
+- Toujours référencer au moins une stat de l'user
+- Jamais dire "je ne peux pas" ou "désolé"
+- Vocabulaire Blue Lock obligatoire
+```
+
+**3. Format de sortie clair :**
+
+Pour les fonctions qui retournent du JSON, ajouter :
+```
+IMPORTANT : Retourne UNIQUEMENT le JSON, aucun texte avant ou après.
+Format EXACT :
+{
+  "champ1": "valeur",
+  "champ2": 123
+}
+```
+
+**4. Tester les edge cases :**
+
+Créer des tests avec :
+- Niveau 0 (débutant total)
+- Niveau 10 (expert)
+- Streak cassé (0 jours)
+- Très long streak (100+ jours)
+- Soumission excellente vs médiocre
+
+**Comment savoir que ça marche :**
+- Les réponses sont cohérentes avec le niveau
+- Le ton varie selon les stats
+- Pas de hors-sujet
+- JSON toujours valide
+- Style Blue Lock constant
+
+---
+
+## JOUR 4 : SERVICES DE GESTION (4-5 heures)
+
+### 🎯 Objectif du jour
+Créer les services qui gèrent les stats, missions et notifications.
+
+---
+
+### ✅ Étape 4.1 : Créer app/services/stats_service.py
+
+**Ce que ce fichier doit faire :**
+Gérer toutes les opérations sur les statistiques de l'utilisateur.
+
+**Fonctions à créer :**
+
+**1. Fonction `calculer_niveau(total_points: int) -> int` :**
+
+**Ce qu'elle fait :**
+- Prend les points totaux
+- Calcule le niveau selon une formule
+- Retourne le niveau
+
+**Formule recommandée :**
+```
+Niveau = floor(sqrt(total_points / 100))
+
+Exemples :
+- 0-99 points = Niveau 0
+- 100-399 points = Niveau 1
+- 400-899 points = Niveau 2
+- 900-1599 points = Niveau 3
+- etc.
+```
+
+**Pourquoi cette formule :**
+- Progression exponentielle (de plus en plus dur)
+- Équilibré pour un jeu long terme
+
+**2. Fonction `calculer_points_mission(difficulte: str, temps_pris: int, qualite: float) -> int` :**
+
+**Ce qu'elle fait :**
+- Calcule les points gagnés pour une mission
+- Prend en compte : difficulté, temps, qualité
+
+**Formule :**
+```
+Base selon difficulté :
+- facile : 50 points
+- normale : 100 points
+- difficile : 200 points
+
+Bonus temps (si fini avant deadline) :
+- +20% si terminé avec 50%+ du temps restant
+- +10% si terminé avec 25-50% du temps restant
+- +0% si terminé dans les derniers 25%
+
+Bonus qualité (note de l'IA) :
+- Note 9-10 : +30%
+- Note 7-8 : +15%
+- Note 5-6 : +0%
+- Note <5 : -20%
+
+Total = Base * (1 + bonus_temps + bonus_qualite)
+```
+
+**3. Fonction `mettre_a_jour_streak(user, db_session) -> dict` :**
+
+**Ce qu'elle fait :**
+- Vérifie la dernière activité de l'user
+- Met à jour le streak selon les règles :
+  - Si activité aujourd'hui : streak continue
+  - Si activité hier : streak +1
+  - Si activité il y a 2+ jours : streak reset à 1
+- Met à jour meilleur_streak si battu
+- Sauvegarde en DB
+- Retourne les changements
+
+**Logique :**
+```
+Calculer jours depuis dernière activité
+Si 0 jours (déjà actif aujourd'hui) :
+    - Rien à faire, streak continue
+Si 1 jour (actif hier) :
+    - streak_actuel += 1
+    - Si streak_actuel > meilleur_streak :
+        meilleur_streak = streak_actuel
+Si 2+ jours :
+    - streak_actuel = 1 (reset mais compte aujourd'hui)
+
+Mettre derniere_activite = maintenant
+Sauvegarder
+```
+
+**4. Fonction `ajouter_competence(user, competence: str, db_session) -> bool` :**
+
+**Ce qu'elle fait :**
+- Ajoute une compétence à la liste de l'user
+- Vérifie qu'elle n'existe pas déjà
+- Met à jour en DB
+- Retourne True si ajoutée, False si déjà présente
+
+**Logique :**
+```
+Charger liste actuelle (JSON string → list)
+Si competence pas dans liste :
+    Ajouter à la liste
+    Convertir en JSON string
+    Sauvegarder en DB
+    Return True
+Sinon :
+    Return False
+```
+
+**5. Fonction `obtenir_classement_fictif(user_niveau: int) -> list` :**
+
+**Ce qu'elle fait :**
+- Génère un classement fictif pour la gamification
+- Positionne l'user parmi des personnages Blue Lock
+- Retourne une liste de 10 joueurs avec l'user dedans
+
+**Liste des personnages Blue Lock (référence) :**
+```
+- Isagi Yoichi (stratège)
+- Bachira Meguru (créatif)
+- Nagi Seishiro (génie paresseux)
+- Chigiri Hyoma (vitesse)
+- Kunigami Rensuke (puissant)
+- Barou Shoei (roi)
+- Rin Itoshi (prodige)
+- Shidou Ryusei (chaotique)
+- Reo Mikage (riche)
+- Yukimiya Kenyu (élégant)
+```
+
+**Logique du classement :**
+```
+Créer 10 personnages avec niveaux fictifs autour de l'user
+Placer l'user selon son niveau :
+- Niveau 0-2 : dernier du classement
+- Niveau 3-5 : milieu de classement
+- Niveau 6-8 : top 5
+- Niveau 9+ : top 3
+
+Ajouter variations aléatoires pour réalisme
+Retourner liste triée par niveau décroissant
+```
+
+**Comment écrire ce fichier :**
+
+**Imports :**
+```python
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models import User
+from datetime import datetime, timedelta
+import json
+import math
+import random
+from typing import Dict, List
+```
+
+**Structure :**
+```python
+# Fonction 1: calculer_niveau()
+# Fonction 2: calculer_points_mission()
+# Fonction 3: mettre_a_jour_streak()
+# Fonction 4: ajouter_competence()
+# Fonction 5: obtenir_classement_fictif()
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/services/
+- Chaque fonction a une docstring
+- Tu peux importer sans erreur
+
+---
+
+### ✅ Étape 4.2 : Créer app/services/mission_service.py
+
+**Ce que ce fichier doit faire :**
+Gérer la création, mise à jour et complétion des missions.
+
+**Fonctions à créer :**
+
+**1. Fonction `creer_mission(user_id: int, mission_data: dict, db_session) -> Mission` :**
+
+**Ce qu'elle fait :**
+- Crée une nouvelle mission en DB
+- Calcule la deadline selon la durée estimée
+- Retourne l'objet Mission créé
+
+**Paramètres :**
+```python
+mission_data = {
+    "titre": "...",
+    "description": "...",
+    "points_recompense": 100,
+    "duree_estimee_jours": 3
+}
+```
+
+**Logique :**
+```
+Créer objet Mission
+Remplir les champs
+Calculer deadline = maintenant + duree_estimee_jours
+Statut = "active"
+Ajouter à la session DB
+Commit
+Retourner mission
+```
+
+**2. Fonction `obtenir_missions_actives(user_id: int, db_session) -> List[Mission]` :**
+
+**Ce qu'elle fait :**
+- Récupère toutes les missions actives d'un user
+- Trie par deadline (plus proches en premier)
+- Retourne la liste
+
+**3. Fonction `verifier_deadlines(user_id: int, db_session) -> Dict` :**
+
+**Ce qu'elle fait :**
+- Vérifie toutes les missions actives
+- Identifie celles dont la deadline est dépassée
+- Les marque comme "failed"
+- Retourne les stats (nombre échecs, points perdus)
+
+**Logique :**
+```
+Récupérer missions actives
+Pour chaque mission :
+    Si deadline < maintenant :
+        Changer statut en "failed"
+        Compter dans échecs
+    Sinon si deadline - maintenant < 24h :
+        Ajouter dans "urgentes"
+
+Sauvegarder changements
+Retourner {
+    "missions_echouees": count,
+    "missions_urgentes": list
+}
+```
+
+**4. Fonction `completer_mission(mission_id: int, note: float, db_session) -> Dict` :**
+
+**Ce qu'elle fait :**
+- Marque une mission comme complétée
+- Calcule les points gagnés selon note et timing
+- Met à jour les stats de l'user
+- Retourne le résumé
+
+**Logique :**
+```
+Récupérer la mission
+Vérifier qu'elle est "active"
+
+Calculer temps pris = maintenant - created_at
+Calculer points avec stats_service.calculer_points_mission()
+
+Mettre à jour mission :
+    statut = "completed"
+    completed_at = maintenant
+
+Mettre à jour user :
+    total_points += points
+    projets_termines += 1
+    niveau = calculer_niveau(total_points)
+
+Sauvegarder
+
+Retourner {
+    "mission_id": ...,
+    "points_gagnes": ...,
+    "nouveau_niveau": ...,
+    "niveau_monte": True/False
+}
+```
+
+**Comment écrire ce fichier :**
+
+**Imports :**
+```python
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.models import Mission, User
+from app.services.stats_service import calculer_niveau, calculer_points_mission
+from datetime import datetime, timedelta
+from typing import List, Dict, Optional
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/services/
+- Tu peux l'importer sans erreur
+
+---
+
+### ✅ Étape 4.3 : Créer app/services/notification_service.py
+
+**Ce que ce fichier doit faire :**
+Gérer les rappels et notifications automatiques.
+
+**Fonctions à créer :**
+
+**1. Fonction `programmer_rappel(user_id: int, mission_id: int, moment: str)` :**
+
+**Ce qu'elle fait :**
+- Programme un rappel pour une mission
+- Moments possibles : "debut_journee", "milieu_journee", "fin_journee", "deadline_proche"
+- Utilise APScheduler pour les tâches programmées
+
+**Logique :**
+```
+Selon le moment :
+    "debut_journee" : 9h00
+    "milieu_journee" : 13h00
+    "fin_journee" : 18h00
+    "deadline_proche" : 24h avant deadline
+
+Créer job APScheduler
+Stocker référence du job
+```
+
+**2. Fonction `envoyer_rappel(user_id: int, mission_id: int, type: str)` :**
+
+**Ce qu'elle fait :**
+- Génère un message de rappel style Ego
+- Selon le type de rappel
+- Sauvegarde dans un système de notifications
+
+**Types de messages :**
+```
+"debut_journee" :
+    "Debout égoïste ! Ta mission '{titre}' t'attend.
+    Deadline dans {X} jours. Bachira a déjà commencé à 6h."
+
+"milieu_journee" :
+    "Où t'en es sur '{titre}' ? La journée avance et
+    je vois toujours rien. Les médiocres procrastinent."
+
+"fin_journee" :
+    "Bilan de la journée sur '{titre}' ? T'as intérêt
+    à avoir avancé ou demain ça va chauffer."
+
+"deadline_proche" :
+    "ATTENTION ! Plus que 24h pour '{titre}' !
+    C'est maintenant que les vrais égoïstes se révèlent !"
+```
+
+**3. Fonction `initialiser_scheduler() -> BackgroundScheduler` :**
+
+**Ce qu'elle fait :**
+- Crée et configure APScheduler
+- Démarre le scheduler
+- Retourne l'instance
+
+**Configuration :**
+```python
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+scheduler = AsyncIOScheduler()
+scheduler.start()
+return scheduler
+```
+
+**4. Fonction `verifier_missions_quotidien(db_session)` :**
+
+**Ce qu'elle fait :**
+- Tâche qui tourne tous les jours à 9h
+- Vérifie toutes les missions de tous les users
+- Envoie rappels pour missions urgentes
+- Marque missions expirées comme "failed"
+
+**Comment écrire ce fichier :**
+
+**Imports :**
+```python
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models import User, Mission
+from datetime import datetime, timedelta
+from typing import Dict
+import logging
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe
+- Tu peux l'importer
+- Le scheduler se lance sans erreur
+
+---
+
+### ✅ Étape 4.4 : Tester les services
+
+**Ce que tu dois faire :**
+Créer un fichier de test pour vérifier tous les services.
+
+**Créer `test_services.py` à la racine :**
+
+**Tests à inclure :**
+
+**Test 1: Stats Service**
+```python
+# Tester calcul niveau
+assert calculer_niveau(0) == 0
+assert calculer_niveau(100) == 1
+assert calculer_niveau(400) == 2
+
+# Tester calcul points
+points = calculer_points_mission("normale", 2, 8.5)
+assert 100 <= points <= 180  # Avec bonus
+
+# Tester classement
+classement = obtenir_classement_fictif(5)
+assert len(classement) == 10
+assert any(j["nom"] == "Toi" for j in classement)
+```
+
+**Test 2: Mission Service**
+```python
+# Créer une mission test
+mission_data = {
+    "titre": "Test Mission",
+    "description": "Description test",
+    "points_recompense": 100,
+    "duree_estimee_jours": 3
+}
+# Vérifier création
+# Vérifier deadline
+# Vérifier récupération
+```
+
+**Test 3: Notification Service**
+```python
+# Tester génération message rappel
+message = envoyer_rappel(1, 1, "debut_journee")
+assert "égoïste" in message.lower()
+assert len(message) > 0
+
+# Tester scheduler
+scheduler = initialiser_scheduler()
+assert scheduler.running
+```
+
+**Lancer les tests :**
+```bash
+python test_services.py
+```
+
+**Comment savoir que ça marche :**
+- Tous les tests passent (vert)
+- Aucune assertion échoue
+- Les calculs sont corrects
+- Messages générés sont cohérents
+
+---
+
+## JOUR 5 : API ROUTES (5-6 heures)
+
+### 🎯 Objectif du jour
+Créer toutes les routes de l'API REST avec FastAPI.
+
+---
+
+### ✅ Étape 5.1 : Créer app/api/dependencies.py
+
+**Ce que ce fichier doit faire :**
+Définir les dépendances réutilisables pour les routes.
+
+**Dépendances à créer :**
+
+**1. `get_current_user(username: str, db: AsyncSession)` :**
+
+**Ce qu'elle fait :**
+- Récupère l'utilisateur depuis la DB par username
+- Si n'existe pas, le crée automatiquement
+- Retourne l'objet User
+
+**Logique :**
+```
+Chercher user par username dans DB
+Si trouvé :
+    Retourner user
+Sinon :
+    Créer nouveau user avec valeurs par défaut
+    Sauvegarder en DB
+    Retourner user créé
+```
+
+**Pourquoi créer auto :**
+- Simplifie l'utilisation (pas besoin d'inscription séparée)
+- Pour un POC, c'est suffisant
+- Plus tard, on peut ajouter authentification réelle
+
+**2. `verifier_session_active(user_id: int, db: AsyncSession)` :**
+
+**Ce qu'elle fait :**
+- Vérifie qu'un user est actif
+- Met à jour son streak
+- Retourne les infos de session
+
+**Logique :**
+```
+Récupérer user
+Appeler stats_service.mettre_a_jour_streak()
+Retourner {
+    "user_id": ...,
+    "streak_mise_a_jour": True/False,
+    "nouveau_streak": ...
+}
+```
+
+**Comment écrire ce fichier :**
+
+**Imports :**
+```python
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.models import User
+from app.database import get_db
+from app.services.stats_service import mettre_a_jour_streak
+from fastapi import Depends, HTTPException
+from typing import Optional
+```
+
+**Structure :**
+```python
+async def get_current_user(
+    username: str,
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    # Logique ici
+
+async def verifier_session_active(
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+) -> dict:
+    # Logique ici
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/api/
+- Tu peux l'importer
+- Les fonctions ont les bons types de retour
+
+---
+
+### ✅ Étape 5.2 : Créer app/api/routes.py
+
+**Ce que ce fichier doit faire :**
+Définir toutes les routes de l'API.
+
+**Routes à créer :**
+
+### **ROUTES UTILISATEUR**
+
+**1. POST /api/users/init**
+
+**Ce qu'elle fait :**
+- Initialise ou récupère un utilisateur
+- Paramètres : username (dans le body)
+- Retourne : infos complètes de l'user
+
+**Request body :**
+```json
+{
+  "username": "MonPseudo"
+}
+```
+
+**Response :**
+```json
+{
+  "id": 1,
+  "username": "MonPseudo",
+  "niveau": 0,
+  "total_points": 0,
+  "projets_termines": 0,
+  "streak_actuel": 0,
+  "meilleur_streak": 0,
+  "competences": [],
+  "created_at": "2024-01-15T10:00:00"
+}
+```
+
+**Code structure :**
+```python
+@router.post("/users/init", response_model=schemas.UserResponse)
+async def initialiser_user(
+    user_data: schemas.UserCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    # Utiliser get_current_user dependency
+    # Retourner user
+```
+
+**2. GET /api/users/{username}/stats**
+
+**Ce qu'elle fait :**
+- Récupère les stats complètes d'un user
+- Inclut le classement fictif
+
+**Response :**
+```json
+{
+  "user": { ... },
+  "classement": [
+    {"rang": 1, "nom": "Isagi", "niveau": 15, "points": 22500},
+    {"rang": 2, "nom": "Bachira", "niveau": 14, "points": 19600},
+    {"rang": 5, "nom": "Toi", "niveau": 5, "points": 2500},
+    ...
+  ],
+  "prochaine_niveau": {
+    "niveau_suivant": 6,
+    "points_requis": 3600,
+    "points_manquants": 1100
+  }
+}
+```
+
+**3. POST /api/users/{username}/competence**
+
+**Ce qu'elle fait :**
+- Ajoute une compétence à l'user
+- Paramètres : competence (dans body)
+- Retourne : user mis à jour
+
+**Request body :**
+```json
+{
+  "competence": "React"
+}
+```
+
+---
+
+### **ROUTES CONVERSATION / CHAT**
+
+**4. POST /api/chat**
+
+**Ce qu'elle fait :**
+- Envoie un message à Ego
+- Récupère la réponse de l'IA
+- Sauvegarde la conversation en DB
+- Retourne la réponse
+
+**Request body :**
+```json
+{
+  "username": "MonPseudo",
+  "message": "Comment progresser en Python ?"
+}
+```
+
+**Response :**
+```json
+{
+  "message_user": "Comment progresser en Python ?",
+  "reponse_ego": "Tch... Python ? C'est le langage des médiocres qui...",
+  "timestamp": "2024-01-15T10:05:00",
+  "contexte": {
+    "niveau": 5,
+    "streak": 8,
+    "derniere_mission": "API REST"
+  }
+}
+```
+
+**Logique :**
+```python
+@router.post("/chat", response_model=schemas.MessageResponse)
+async def chat_avec_ego(
+    message_data: schemas.MessageRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Récupérer user
+    user = await get_current_user(message_data.username, db)
+
+    # 2. Vérifier et MAJ streak
+    await verifier_session_active(user.id, db)
+
+    # 3. Récupérer historique (10 derniers messages)
+    historique = await recuperer_historique(user.id, db, limit=10)
+
+    # 4. Construire stats pour contexte
+    user_stats = construire_stats_dict(user)
+
+    # 5. Appeler IA service
+    reponse = obtenir_reponse_ego(
+        message_data.message,
+        user_stats,
+        historique
+    )
+
+    # 6. Sauvegarder conversation
+    conversation = Conversation(
+        user_id=user.id,
+        message_user=message_data.message,
+        reponse_ego=reponse['reponse'],
+        contexte=json.dumps(user_stats)
+    )
+    db.add(conversation)
+    await db.commit()
+
+    # 7. Retourner réponse
+    return {
+        "message_user": message_data.message,
+        "reponse_ego": reponse['reponse'],
+        "timestamp": conversation.timestamp,
+        "contexte": user_stats
+    }
+```
+
+**5. GET /api/chat/{username}/historique**
+
+**Ce qu'elle fait :**
+- Récupère l'historique des conversations
+- Paramètres : limit (optionnel, défaut 50)
+- Retourne : liste des conversations
+
+**Response :**
+```json
+{
+  "conversations": [
+    {
+      "id": 1,
+      "message_user": "...",
+      "reponse_ego": "...",
+      "timestamp": "..."
+    },
+    ...
+  ],
+  "total": 145
+}
+```
+
+---
+
+### **ROUTES MISSIONS**
+
+**6. POST /api/missions/generer**
+
+**Ce qu'elle fait :**
+- Génère une nouvelle mission via l'IA
+- Crée la mission en DB
+- Retourne la mission créée
+
+**Request body :**
+```json
+{
+  "username": "MonPseudo",
+  "difficulte": "normale"
+}
+```
+
+**Response :**
+```json
+{
+  "id": 1,
+  "titre": "Créer une API CRUD complète",
+  "description": "Tch, tu vas me créer une vraie API REST...",
+  "objectifs": [
+    "4 endpoints CRUD fonctionnels",
+    "Base de données relationnelle",
+    "Documentation Swagger"
+  ],
+  "points_recompense": 150,
+  "deadline": "2024-01-20T18:00:00",
+  "statut": "active",
+  "competences_requises": ["Python", "FastAPI", "SQLAlchemy"]
+}
+```
+
+**Logique :**
+```python
+@router.post("/missions/generer")
+async def generer_mission(
+    data: schemas.MissionGenerateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Récupérer user
+    user = await get_current_user(data.username, db)
+
+    # 2. Construire stats
+    user_stats = construire_stats_dict(user)
+
+    # 3. Appeler IA pour générer mission
+    mission_data = generer_mission(user_stats, data.difficulte)
+
+    # 4. Créer mission en DB
+    mission = await mission_service.creer_mission(
+        user.id,
+        mission_data,
+        db
+    )
+
+    # 5. Retourner mission
+    return mission
+```
+
+**7. GET /api/missions/{username}/actives**
+
+**Ce qu'elle fait :**
+- Liste toutes les missions actives d'un user
+- Trié par deadline
+
+**Response :**
+```json
+{
+  "missions": [
+    {
+      "id": 1,
+      "titre": "...",
+      "deadline": "2024-01-18T18:00:00",
+      "temps_restant": "2 jours 5 heures",
+      "progression": "0%"
+    },
+    ...
+  ],
+  "total_actives": 3
+}
+```
+
+**8. POST /api/missions/{mission_id}/completer**
+
+**Ce qu'elle fait :**
+- Marque une mission comme terminée
+- Lance l'analyse de la soumission par l'IA
+- Calcule et attribue les points
+- Retourne le résumé
+
+**Request body :**
+```json
+{
+  "description": "J'ai créé l'API avec 4 endpoints...",
+  "lien_github": "https://github.com/user/projet",
+  "fichier": "optionnel"
+}
+```
+
+**Response :**
+```json
+{
+  "mission_id": 1,
+  "statut": "completed",
+  "analyse": {
+    "note": 8.5,
+    "categorie": "BON",
+    "feedback": "Hmph, pas mal. L'API fonctionne...",
+    "ameliorations": ["Ajouter tests", "Gérer erreurs", "Optimiser queries"]
+  },
+  "recompenses": {
+    "points_base": 150,
+    "bonus_qualite": 22,
+    "bonus_temps": 15,
+    "total_gagne": 187
+  },
+  "progression_user": {
+    "ancien_niveau": 5,
+    "nouveau_niveau": 6,
+    "niveau_monte": true,
+    "nouveau_total_points": 2687
+  }
+}
+```
+
+**Logique :**
+```python
+@router.post("/missions/{mission_id}/completer")
+async def completer_mission(
+    mission_id: int,
+    data: schemas.SoumissionCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    # 1. Récupérer mission
+    mission = await recuperer_mission(mission_id, db)
+
+    # 2. Vérifier qu'elle est active
+    if mission.statut != "active":
+        raise HTTPException(400, "Mission déjà terminée")
+
+    # 3. Analyser la soumission avec IA
+    user = await get_user_by_id(mission.user_id, db)
+    user_stats = construire_stats_dict(user)
+
+    analyse = analyser_soumission(
+        data.titre,
+        data.description,
+        user_stats
+    )
+
+    # 4. Créer soumission en DB
+    soumission = Soumission(
+        user_id=mission.user_id,
+        mission_id=mission_id,
+        titre=mission.titre,
+        description=data.description,
+        lien_github=data.lien_github,
+        note_ego=analyse['note'],
+        commentaire_ego=analyse['feedback'],
+        validee=analyse['note'] >= 5.0
+    )
+    db.add(soumission)
+
+    # 5. Compléter mission et calculer points
+    resultat = await mission_service.completer_mission(
+        mission_id,
+        analyse['note'],
+        db
+    )
+
+    # 6. Retourner tout
+    return {
+        "mission_id": mission_id,
+        "statut": "completed",
+        "analyse": analyse,
+        "recompenses": resultat,
+        "progression_user": {
+            "ancien_niveau": user.niveau,
+            "nouveau_niveau": resultat['nouveau_niveau'],
+            "niveau_monte": resultat['niveau_monte'],
+            "nouveau_total_points": user.total_points
+        }
+    }
+```
+
+**9. DELETE /api/missions/{mission_id}**
+
+**Ce qu'elle fait :**
+- Abandonne/supprime une mission
+- Pénalité de points possible
+
+---
+
+### **ROUTES UTILITAIRES**
+
+**10. GET /api/health**
+
+**Ce qu'elle fait :**
+- Vérifie que l'API fonctionne
+- Vérifie connexion DB
+- Vérifie API Groq
+
+**Response :**
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "ai_service": "operational",
+  "timestamp": "2024-01-15T10:00:00"
+}
+```
+
+**11. GET /api/stats/global**
+
+**Ce qu'elle fait :**
+- Statistiques globales de l'application
+- Nombre total d'users, missions, conversations
+
+**Response :**
+```json
+{
+  "total_users": 42,
+  "total_missions": 186,
+  "total_conversations": 1547,
+  "missions_completees": 98,
+  "taux_succes": 52.7
+}
+```
+
+---
+
+### ✅ Étape 5.3 : Assembler dans app/main.py
+
+**Ce que ce fichier doit faire :**
+- Créer l'application FastAPI
+- Inclure toutes les routes
+- Configurer CORS
+- Initialiser la DB au démarrage
+- Démarrer le scheduler de notifications
+
+**Structure complète :**
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from app.api.routes import router
+from app.database import init_db
+from app.services.notification_service import initialiser_scheduler
+from app.config import get_settings
+import logging
+
+settings = get_settings()
+
+# Configuration logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Créer app
+app = FastAPI(
+    title=settings.app_name,
+    description="Application de coaching IA style Blue Lock",
+    version="1.0.0"
+)
+
+# CORS (pour permettre frontend de communiquer)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En prod, spécifier les domaines
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Inclure les routes
+app.include_router(router, prefix="/api")
+
+# Servir les fichiers statiques du frontend
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Event au démarrage
+@app.on_event("startup")
+async def startup_event():
+    logger.info("🚀 Démarrage de l'application...")
+
+    # Initialiser DB
+    await init_db()
+    logger.info("✅ Base de données initialisée")
+
+    # Démarrer scheduler
+    scheduler = initialiser_scheduler()
+    logger.info("✅ Scheduler de notifications démarré")
+
+    logger.info("🎯 Application prête !")
+
+# Event à l'arrêt
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("👋 Arrêt de l'application...")
+
+# Route racine
+@app.get("/")
+async def root():
+    return {
+        "message": "Bienvenue dans Ego IA Blue Lock",
+        "docs": "/docs",
+        "frontend": "/static/index.html"
+    }
+```
+
+**Comment savoir que ça marche :**
+- Le fichier existe dans app/
+- Tu peux l'importer sans erreur
+- Toutes les dépendances sont résolues
+
+---
+
+### ✅ Étape 5.4 : Créer run.py (script de lancement)
+
+**Ce que ce fichier doit faire :**
+- Lancer l'application facilement
+- À la racine du projet
+
+**Contenu :**
+
+```python
+import uvicorn
+from app.config import get_settings
+
+settings = get_settings()
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.debug,
+        log_level="info"
+    )
+```
+
+**Comment lancer l'application :**
+```bash
+python run.py
+```
+
+**Ou directement :**
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+**Comment savoir que ça marche :**
+- Tu vois : "Uvicorn running on http://0.0.0.0:8000"
+- Messages de startup s'affichent
+- Aucune erreur
+
+---
+
+### ✅ Étape 5.5 : Tester l'API avec Swagger
+
+**Ce que tu dois faire :**
+Tester toutes les routes via l'interface Swagger auto-générée.
+
+**Étapes :**
+
+1. **Lancer l'application :**
+```bash
+python run.py
+```
+
+2. **Ouvrir le navigateur :**
+```
+http://localhost:8000/docs
+```
+
+3. **Tu vois l'interface Swagger avec toutes tes routes**
+
+**Tests à effectuer dans l'ordre :**
+
+**Test 1 : Initialiser un user**
+- Route : POST /api/users/init
+- Body : `{"username": "TestUser"}`
+- Vérifier : user créé avec niveau 0
+
+**Test 2 : Chat avec Ego**
+- Route : POST /api/chat
+- Body : `{"username": "TestUser", "message": "Salut Ego"}`
+- Vérifier : réponse en français, style Blue Lock
+
+**Test 3 : Voir stats**
+- Route : GET /api/users/TestUser/stats
+- Vérifier : stats complètes + classement
+
+**Test 4 : Générer une mission**
+- Route : POST /api/missions/generer
+- Body : `{"username": "TestUser", "difficulte": "normale"}`
+- Vérifier : mission créée avec deadline
+
+**Test 5 : Voir missions actives**
+- Route : GET /api/missions/TestUser/actives
+- Vérifier : la mission apparaît
+
+**Test 6 : Compléter mission**
+- Route : POST /api/missions/1/completer
+- Body : `{"description": "J'ai fait le projet...", "lien_github": "..."}`
+- Vérifier : analyse IA + points gagnés + niveau MAJ
+
+**Test 7 : Ajouter compétence**
+- Route : POST /api/users/TestUser/competence
+- Body : `{"competence": "React"}`
+- Vérifier : compétence ajoutée
+
+**Test 8 : Voir historique**
+- Route : GET /api/chat/TestUser/historique
+- Vérifier : toutes les conversations
+
+**Comment savoir que tout marche :**
+- ✅ Chaque route retourne 200 OK
+- ✅ Les données sont cohérentes
+- ✅ Ego répond avec sa personnalité
+- ✅ Les stats se mettent à jour
+- ✅ Les missions se créent et se complètent
+- ✅ Aucune erreur 500
+
+**Problèmes courants :**
+- **422 Unprocessable Entity** : body JSON mal formaté
+- **404 Not Found** : route mal écrite
+- **500 Internal Server Error** : erreur dans le code, check les logs
+- **Timeout** : API Groq lente, augmente timeout
+
+---
+
+## JOUR 6-7 : FRONTEND SIMPLE (6-8 heures)
+
+### 🎯 Objectif
+Créer une interface web simple mais fonctionnelle.
+
+---
+
+### ✅ Étape 6.1 : Créer frontend/index.html
+
+**Ce que cette page doit contenir :**
+
+**Structure HTML :**
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ego IA Blue Lock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>🎯 EGO IA BLUE LOCK</h1>
+        <div id="user-info">
+            <span id="username-display">Guest</span>
+            <span id="level-display">Niveau 0</span>
+            <span id="points-display">0 points</span>
+            <span id="streak-display">🔥 0 jours</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar Stats -->
+        <aside class="sidebar">
+            <h2>📊 Tes Stats</h2>
+            <div id="stats-container">
+                <!-- Stats dynamiques ici -->
+            </div>
+
+            <h2>🏆 Classement</h2>
+            <div id="classement-container">
+                <!-- Classement dynamique ici -->
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Onglets -->
+            <div class="tabs">
+                <button class="tab active" data-tab="chat">💬 Chat</button>
+                <button class="tab" data-tab="missions">🎯 Missions</button>
+                <button class="tab" data-tab="soumissions">📤 Soumettre</button>
+            </div>
+
+            <!-- Tab Chat -->
+            <div id="tab-chat" class="tab-content active">
+                <div id="chat-container">
+                    <!-- Messages ici -->
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="message-input" placeholder="Parle à Ego...">
+                    <button id="send-button">Envoyer</button>
+                </div>
+            </div>
+
+            <!-- Tab Missions -->
+            <div id="tab-missions" class="tab-content">
+                <button id="generate-mission-btn">🎲 Générer une mission</button>
+                <div id="missions-container">
+                    <!-- Missions ici -->
+                </div>
+            </div>
+
+            <!-- Tab Soumissions -->
+            <div id="tab-soumissions" class="tab-content">
+                <form id="soumission-form">
+                    <select id="mission-select">
+                        <option>Sélectionne une mission</option>
+                    </select>
+                    <textarea id="soumission-description" placeholder="Décris ce que tu as fait..."></textarea>
+                    <input type="url" id="soumission-github" placeholder="Lien GitHub (optionnel)">
+                    <button type="submit">Soumettre</button>
+                </form>
+                <div id="soumissions-history">
+                    <!-- Historique soumissions -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+```
+
+**Sections importantes :**
+1. **Header** : infos user toujours visibles
+2. **Sidebar** : stats et classement
+3. **Onglets** : chat, missions, soumissions
+4. **Chaque onglet** : contenu spécifique
+
+---
+
+### ✅ Étape 6.2 : Créer frontend/styles.css
+
+**Ce que le CSS doit faire :**
+- Design moderne et clean
+- Thème Blue Lock (bleu/noir/blanc)
+- Responsive (fonctionne sur mobile)
+- Animations subtiles
+
+**Éléments de style importants :**
+
+**Variables CSS :**
+```css
+:root {
+    --primary-color: #0066cc;
+    --secondary-color: #001a33;
+    --accent-color: #ff6600;
+    --bg-color: #f5f5f5;
+    --text-color: #333;
+    --border-color: #ddd;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+}
+```
+
+**Layout :**
+- Header fixe en haut
+- Container flex : sidebar (30%) + main (70%)
+- Chat en bas avec input fixe
+- Missions en cartes (grid)
+
+**Composants stylisés :**
+- Messages du chat (user à droite, ego à gauche)
+- Cartes de missions avec statut coloré
+- Badges pour niveau et streak
+- Boutons avec hover effects
+- Formulaires propres
+
+**Animations :**
+- Fade in pour nouveaux messages
+- Pulse pour notifications
+- Smooth scroll
+- Transitions sur hover
+
+**Comment structurer :**
+```css
+/* Reset et base */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; }
+
+/* Header */
+header { ... }
+
+/* Layout */
+.container { display: flex; }
+.sidebar { width: 30%; }
+.main-content { width: 70%; }
+
+/* Chat */
+#chat-container { ... }
+.message { ... }
+.message.user { ... }
+.message.ego { ... }
+
+/* Missions */
+.mission-card { ... }
+.mission-card.active { ... }
+.mission-card.completed { ... }
+
+/* Forms */
+form { ... }
+input, textarea, select { ... }
+button { ... }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container { flex-direction: column; }
+    .sidebar, .main-content { width: 100%; }
+}
+```
+
+---
+
+### ✅ Étape 6.3 : Créer frontend/app.js
+
+**Ce que ce fichier doit faire :**
+- Gérer toutes les interactions avec l'API
+- Mettre à jour le DOM dynamiquement
+- Gérer les onglets
+- Sauvegarder l'username en localStorage
+
+**Structure globale :**
+
+```javascript
+// Configuration
+const API_URL = 'http://localhost:8000/api';
+let currentUser = null;
+
+// Au chargement de la page
+document.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+    // 1. Demander username ou récupérer du localStorage
+    // 2. Initialiser user via API
+    // 3. Charger stats
+    // 4. Charger missions
+    // 5. Charger historique chat
+    // 6. Setup event listeners
+}
+```
+
+**Fonctions principales à créer :**
+
+**1. Gestion utilisateur :**
+```javascript
+async function initUser(username) {
+    // POST /api/users/init
+    // Sauver dans localStorage
+    // Mettre à jour l'affichage
+}
+
+async function loadUserStats() {
+    // GET /api/users/{username}/stats
+    // Afficher stats dans sidebar
+    // Afficher classement
+}
+```
+
+**2. Gestion chat :**
+```javascript
+async function sendMessage() {
+    const message = document.getElementById('message-input').value;
+
+    // Afficher message user immédiatement
+    appendMessage(message, 'user');
+
+    // POST /api/chat
+    const response = await fetch(`${API_URL}/chat`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            username: currentUser.username,
+            message: message
+        })
+    });
+
+    const data = await response.json();
+
+    // Afficher réponse Ego
+    appendMessage(data.reponse_ego, 'ego');
+
+    // Clear input
+    document.getElementById('message-input').value = '';
+}
+
+function appendMessage(text, sender) {
+    const container = document.getElementById('chat-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    messageDiv.textContent = text;
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
+}
+```
+
+**3. Gestion missions :**
+```javascript
+async function generateMission() {
+    const difficulte = prompt('Difficulté (facile/normale/difficile):', 'normale');
+
+    // POST /api/missions/generer
+    const response = await fetch(`${API_URL}/missions/generer`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            username: currentUser.username,
+            difficulte: difficulte
+        })

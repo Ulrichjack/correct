@@ -1,0 +1,758 @@
+# 📋 GUIDE COMPLET - CORRECTION AUTOMATIQUE (2 SEMAINES)
+## Version Sans Code - Étapes Détaillées
+
+---
+
+## 🎯 OBJECTIF FINAL
+Créer une application qui :
+1. Reçoit des copies d'étudiants (PDF/images)
+2. Reçoit la correction du professeur
+3. Compare automatiquement avec l'IA
+4. Génère des rapports PDF avec notes et commentaires
+
+---
+
+# 🔧 JOUR 1 : INSTALLATION ET CONFIGURATION (2-3 heures)
+
+## ✅ Étape 1.1 : Vérifier Python
+**Ce que tu fais :**
+- Ouvre le terminal (CMD sur Windows, Terminal sur Mac/Linux)
+- Tape : `python --version`
+- Tu dois voir : Python 3.10 ou plus récent
+- Si ça ne marche pas, télécharge Python depuis python.org
+
+**Comment savoir que ça marche :**
+- Tu vois "Python 3.10.X" ou supérieur affiché
+
+---
+
+## ✅ Étape 1.2 : Créer le dossier projet
+**Ce que tu fais :**
+- Crée un nouveau dossier appelé "exam-correction" sur ton ordinateur
+- Ouvre ce dossier dans PyCharm (Fichier > Ouvrir > Sélectionne le dossier)
+
+**Comment savoir que ça marche :**
+- PyCharm affiche ton dossier vide dans l'explorateur de fichiers à gauche
+
+---
+
+## ✅ Étape 1.3 : Créer environnement virtuel
+**Ce que tu fais :**
+- Dans PyCharm, ouvre le terminal intégré (en bas de l'écran)
+- Tape : `python -m venv venv`
+- Attends 1-2 minutes (ça crée un dossier "venv")
+
+**Pourquoi c'est important :**
+- Ça isole ton projet des autres projets Python
+- Évite les conflits de versions
+
+**Comment savoir que ça marche :**
+- Un dossier "venv" apparaît dans ton projet
+
+---
+
+## ✅ Étape 1.4 : Activer l'environnement virtuel
+**Ce que tu fais :**
+
+**Sur Windows :**
+- Dans le terminal PyCharm, tape : `venv\Scripts\activate`
+
+**Sur Mac/Linux :**
+- Dans le terminal PyCharm, tape : `source venv/bin/activate`
+
+**Comment savoir que ça marche :**
+- Tu vois "(venv)" au début de ta ligne de commande
+- Exemple : `(venv) C:\ton\chemin>`
+
+---
+
+## ✅ Étape 1.5 : Créer la structure des dossiers
+**Ce que tu fais :**
+Dans PyCharm, clique droit sur ton projet > New > Directory et crée ces dossiers :
+
+```
+exam-correction/
+├── app/
+│   ├── services/
+│   └── api/
+├── uploads/
+│   ├── copies/
+│   └── corrections/
+└── exports/
+```
+
+**Crée un par un :**
+1. Dossier "app"
+2. Dans app, crée "services" et "api"
+3. Dossier "uploads" à la racine
+4. Dans uploads, crée "copies" et "corrections"
+5. Dossier "exports" à la racine
+
+**Comment savoir que ça marche :**
+- Tu vois cette structure dans l'explorateur de fichiers de PyCharm
+
+---
+
+## ✅ Étape 1.6 : Créer fichier requirements.txt
+**Ce que tu fais :**
+- Dans PyCharm, clique droit sur la racine du projet
+- New > File
+- Nomme-le : `requirements.txt`
+- Copie-colle dedans (exactement) :
+
+```
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pytesseract==0.3.10
+Pillow==10.1.0
+pdf2image==1.16.3
+openai==1.3.5
+python-dotenv==1.0.0
+PyPDF2==3.0.1
+reportlab==4.0.7
+aiofiles==23.2.1
+```
+
+- Sauvegarde le fichier (Ctrl+S)
+
+**Comment savoir que ça marche :**
+- Le fichier requirements.txt est visible dans ton projet
+
+---
+
+## ✅ Étape 1.7 : Installer les packages Python
+**Ce que tu fais :**
+- Dans le terminal PyCharm (avec venv activé)
+- Tape : `pip install -r requirements.txt`
+- Attends 5-10 minutes (ça télécharge et installe tout)
+
+**Ce qui se passe :**
+- Plein de lignes défilent dans le terminal
+- Tu verras "Successfully installed..." à la fin
+
+**Comment savoir que ça marche :**
+- Aucun message d'erreur rouge
+- La commande se termine sans erreur
+
+---
+
+## ✅ Étape 1.8 : Installer Tesseract OCR
+**Ce que tu fais selon ton système :**
+
+**Windows :**
+1. Va sur : https://github.com/UB-Mannheim/tesseract/wiki
+2. Télécharge l'installeur Windows (tesseract-ocr-w64-setup-v5.X.X.exe)
+3. Lance l'installeur
+4. Installe dans : `C:\Program Files\Tesseract-OCR`
+5. Coche "Add to PATH" pendant l'installation
+6. Clique sur "Install"
+
+**Mac :**
+1. Ouvre Terminal
+2. Tape : `brew install tesseract`
+3. Attends la fin de l'installation
+
+**Linux :**
+1. Ouvre Terminal
+2. Tape : `sudo apt-get install tesseract-ocr`
+
+**Comment savoir que ça marche :**
+- Tape dans le terminal : `tesseract --version`
+- Tu dois voir la version de Tesseract affichée
+
+---
+
+## ✅ Étape 1.9 : Créer fichier .env
+**Ce que tu fais :**
+- Dans PyCharm, crée un nouveau fichier nommé `.env` à la racine
+- Écris dedans :
+
+```
+OPENAI_API_KEY=sk-votre-clé-ici
+UPLOAD_FOLDER=uploads
+MAX_FILE_SIZE=10485760
+TESSERACT_PATH=C:\Program Files\Tesseract-OCR\tesseract.exe
+```
+
+**IMPORTANT :**
+- Remplace `sk-votre-clé-ici` par ta vraie clé OpenAI
+- Si tu n'as pas de clé OpenAI, va sur platform.openai.com pour en créer une
+- Sur Mac/Linux, change TESSERACT_PATH en : `/usr/local/bin/tesseract`
+
+**Comment savoir que ça marche :**
+- Le fichier .env existe dans ton projet
+
+---
+
+## ✅ Étape 1.10 : Créer .gitignore
+**Ce que tu fais :**
+- Crée un fichier `.gitignore` à la racine
+- Écris dedans :
+
+```
+venv/
+.env
+uploads/
+exports/
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+```
+
+**Pourquoi :**
+- Empêche de commit les fichiers sensibles sur Git
+
+---
+
+# 📁 JOUR 2-3 : UPLOAD DE FICHIERS (4-6 heures)
+
+## ✅ Étape 2.1 : Créer le fichier de configuration
+**Ce que tu fais :**
+- Dans le dossier "app", crée un fichier : `config.py`
+- Ce fichier va contenir toutes tes configurations
+
+**Ce que ce fichier doit faire :**
+1. Charger les variables du fichier .env
+2. Définir les extensions de fichiers autorisées (PDF, JPG, PNG)
+3. Définir la taille maximale des fichiers
+4. Stocker le chemin vers Tesseract
+
+**Comment savoir que ça marche :**
+- Le fichier config.py existe dans le dossier app
+
+---
+
+## ✅ Étape 2.2 : Créer le service de gestion des fichiers
+**Ce que tu fais :**
+- Dans `app/services/`, crée un fichier : `file_service.py`
+
+**Ce que ce fichier doit faire :**
+1. **Fonction validate_file** : Vérifie qu'un fichier uploadé est valide
+   - Vérifie l'extension (pdf, jpg, png seulement)
+   - Vérifie la taille (pas plus de 10MB)
+   - Retourne True si OK, sinon retourne une erreur
+
+2. **Fonction save_file** : Sauvegarde un fichier uploadé
+   - Prend le fichier en paramètre
+   - Prend un nom de sous-dossier (copies ou corrections)
+   - Crée le dossier s'il n'existe pas
+   - Sauvegarde le fichier avec son nom original
+   - Retourne le chemin complet du fichier sauvegardé
+
+3. **Fonction cleanup_folder** : Nettoie un dossier
+   - Supprime tous les fichiers d'un dossier temporaire
+   - Recrée le dossier vide
+
+**Comment savoir que ça marche :**
+- Le fichier file_service.py existe
+- Tu peux l'importer sans erreur
+
+---
+
+## ✅ Étape 2.3 : Créer le fichier principal de l'API
+**Ce que tu fais :**
+- Dans le dossier "app", crée un fichier : `main.py`
+
+**Ce que ce fichier doit faire :**
+1. Créer une application FastAPI
+2. Activer CORS (pour permettre au frontend de communiquer)
+3. Créer un dictionnaire pour stocker les sessions en mémoire
+4. Créer une route GET "/" qui retourne "API en marche"
+5. Créer une route GET "/health" pour vérifier que tout fonctionne
+
+**Comment savoir que ça marche :**
+- Le fichier main.py existe dans app/
+
+---
+
+## ✅ Étape 2.4 : Lancer le serveur pour la première fois
+**Ce que tu fais :**
+- Dans le terminal PyCharm
+- Tape : `uvicorn app.main:app --reload --port 8000`
+
+**Ce qui doit se passer :**
+- Tu vois : "Uvicorn running on http://127.0.0.1:8000"
+- Le serveur démarre sans erreur
+
+**Comment savoir que ça marche :**
+1. Ouvre ton navigateur
+2. Va sur : http://localhost:8000
+3. Tu dois voir un message JSON : {"message": "API en marche"}
+4. Va sur : http://localhost:8000/docs
+5. Tu vois l'interface Swagger (interface de test de l'API)
+
+**Si ça ne marche pas :**
+- Vérifie qu'aucun autre programme n'utilise le port 8000
+- Vérifie que tu as bien activé l'environnement virtuel (venv)
+
+---
+
+## ✅ Étape 2.5 : Ajouter la route d'upload des copies
+**Ce que tu fais :**
+- Dans `main.py`, ajoute une nouvelle route POST `/upload-copies`
+
+**Ce que cette route doit faire :**
+1. Accepter plusieurs fichiers en même temps
+2. Pour chaque fichier :
+   - Appeler validate_file pour vérifier qu'il est valide
+   - Appeler save_file pour le sauvegarder dans uploads/copies/
+   - Stocker le nom et le chemin du fichier
+3. Générer un ID unique pour cette session (utilise uuid)
+4. Stocker dans le dictionnaire en mémoire :
+   - L'ID de session
+   - La liste des fichiers uploadés
+   - Le statut "uploaded"
+5. Retourner en JSON :
+   - L'ID de session
+   - Le nombre de fichiers uploadés
+   - La liste des fichiers
+
+**Comment savoir que ça marche :**
+1. Va sur http://localhost:8000/docs
+2. Trouve la route POST /upload-copies
+3. Clique sur "Try it out"
+4. Upload 1 ou 2 fichiers PDF de test
+5. Clique sur "Execute"
+6. Tu dois voir une réponse avec :
+   - Un session_id (exemple : "a1b2c3d4-...")
+   - Le nombre de fichiers
+   - La liste des fichiers uploadés
+7. Vérifie que les fichiers sont bien dans le dossier uploads/copies/
+
+---
+
+## ✅ Étape 2.6 : Ajouter la route d'upload de la correction
+**Ce que tu fais :**
+- Dans `main.py`, ajoute une route POST `/upload-correction/{session_id}`
+
+**Ce que cette route doit faire :**
+1. Prendre en paramètre l'ID de session
+2. Vérifier que cette session existe (sinon erreur 404)
+3. Accepter UN seul fichier (la correction du prof)
+4. Valider et sauvegarder le fichier dans uploads/corrections/
+5. Ajouter ce fichier dans la session en mémoire
+6. Retourner la confirmation
+
+**Comment savoir que ça marche :**
+1. Va sur http://localhost:8000/docs
+2. D'abord upload des copies (étape 2.5) pour avoir un session_id
+3. Copie le session_id obtenu
+4. Trouve la route POST /upload-correction/{session_id}
+5. Colle le session_id dans le champ
+6. Upload un fichier PDF de correction
+7. Tu dois voir une confirmation
+8. Vérifie que le fichier est dans uploads/corrections/
+
+---
+
+## ✅ Étape 2.7 : Tester le workflow complet d'upload
+**Ce que tu fais :**
+1. Prépare 2-3 fichiers PDF de test
+2. Lance le serveur si ce n'est pas fait
+3. Va sur http://localhost:8000/docs
+4. Upload les copies → note le session_id
+5. Upload la correction avec le session_id
+6. Vérifie que tous les fichiers sont bien dans uploads/
+
+**Comment savoir que ça marche :**
+- Tu peux uploader plusieurs copies
+- Tu peux uploader une correction
+- Tous les fichiers sont sauvegardés dans les bons dossiers
+- Aucune erreur n'apparaît
+
+---
+
+# 🔍 JOUR 4-5 : EXTRACTION DE TEXTE (OCR) (6-8 heures)
+
+## ✅ Étape 3.1 : Créer le service OCR
+**Ce que tu fais :**
+- Dans `app/services/`, crée un fichier : `ocr_service.py`
+
+**Ce que ce fichier doit faire :**
+
+**Fonction 1 : extract_from_image**
+- Prend en paramètre un chemin d'image (JPG/PNG)
+- Utilise pytesseract pour extraire le texte
+- Configure la langue en français
+- Retourne le texte extrait
+- Si erreur, retourne une chaîne vide
+
+**Fonction 2 : extract_from_pdf**
+- Prend en paramètre un chemin de PDF
+- Convertit chaque page du PDF en image (avec pdf2image)
+- Pour chaque page :
+  - Extrait le texte avec pytesseract
+  - Ajoute un marqueur "--- PAGE X ---"
+- Combine tout le texte
+- Retourne le texte complet
+- Affiche la progression (Page 1/5, Page 2/5, etc.)
+
+**Fonction 3 : extract_text (fonction principale)**
+- Prend un chemin de fichier
+- Détecte l'extension (.pdf, .jpg, .png)
+- Appelle la bonne fonction (extract_from_pdf ou extract_from_image)
+- Retourne le texte extrait
+
+**Comment savoir que ça marche :**
+- Le fichier ocr_service.py existe
+- Tu peux l'importer sans erreur
+
+---
+
+## ✅ Étape 3.2 : Tester l'OCR manuellement
+**Ce que tu fais :**
+- Crée un petit script de test dans la racine : `test_ocr.py`
+
+**Ce que le script doit faire :**
+1. Importer ocr_service
+2. Tester sur un fichier PDF :
+   - Définir le chemin d'un PDF de test
+   - Appeler extract_text
+   - Afficher les 500 premiers caractères
+   - Afficher la longueur totale du texte
+
+**Comment tester :**
+- Place un PDF de test dans uploads/copies/
+- Lance : `python test_ocr.py`
+- Tu dois voir le texte extrait s'afficher
+
+**Comment savoir que ça marche :**
+- Tu vois du texte français extrait
+- Le texte correspond au contenu du PDF
+- Aucune erreur
+
+**Si ça ne marche pas :**
+- Vérifie que Tesseract est bien installé : `tesseract --version`
+- Vérifie le chemin dans .env (TESSERACT_PATH)
+- Teste avec un PDF de bonne qualité (pas scanné à basse résolution)
+
+---
+
+## ✅ Étape 3.3 : Ajouter route de test OCR dans l'API
+**Ce que tu fais :**
+- Dans `main.py`, ajoute une route POST `/test-ocr/{session_id}`
+
+**Ce que cette route doit faire :**
+1. Prendre en paramètre le session_id
+2. Vérifier que la session existe
+3. Récupérer la première copie de la session
+4. Appeler ocr_service.extract_text sur cette copie
+5. Si une correction existe, extraire aussi son texte
+6. Retourner :
+   - Le nom du fichier
+   - Les 500 premiers caractères du texte
+   - La longueur totale du texte
+
+**Comment savoir que ça marche :**
+1. Upload des fichiers via /upload-copies et /upload-correction
+2. Note le session_id
+3. Va sur /docs
+4. Appelle /test-ocr/{session_id}
+5. Tu vois le texte extrait en réponse
+6. Vérifie que le texte est cohérent
+
+**Problèmes courants :**
+- Si le texte est vide : le PDF est peut-être une image scannée de mauvaise qualité
+- Si le texte est bizarre : Tesseract a du mal avec l'écriture manuscrite
+- Si erreur : vérifie les chemins des fichiers
+
+---
+
+## ✅ Étape 3.4 : Améliorer la qualité OCR (optionnel)
+**Ce que tu peux faire pour améliorer :**
+1. Augmenter le DPI lors de la conversion PDF → Image (passe de 200 à 300)
+2. Pré-traiter les images avant OCR :
+   - Convertir en niveaux de gris
+   - Augmenter le contraste
+   - Enlever le bruit
+
+**Comment :**
+- Modifie la fonction extract_from_pdf
+- Avant d'appeler pytesseract, traite l'image avec Pillow
+
+**Mais attention :**
+- Ça prend plus de temps
+- Pas forcément nécessaire pour des documents de bonne qualité
+
+---
+
+# 🤖 JOUR 6-8 : INTÉGRATION IA (8-10 heures)
+
+## ✅ Étape 4.1 : Obtenir une clé API OpenAI
+**Ce que tu fais :**
+1. Va sur : https://platform.openai.com
+2. Crée un compte ou connecte-toi
+3. Va dans "API Keys"
+4. Clique sur "Create new secret key"
+5. Copie la clé (elle commence par "sk-...")
+6. Colle-la dans ton fichier .env à la place de "sk-votre-clé-ici"
+
+**IMPORTANT :**
+- Ne partage JAMAIS cette clé
+- Ajoute des crédits sur ton compte OpenAI (5-10€ suffisent pour tester)
+
+**Comment savoir que ça marche :**
+- Tu as une clé qui commence par "sk-"
+- Elle est dans ton fichier .env
+
+---
+
+## ✅ Étape 4.2 : Créer le service IA
+**Ce que tu fais :**
+- Dans `app/services/`, crée un fichier : `ai_service.py`
+
+**Ce que ce fichier doit faire :**
+
+**Fonction principale : corriger_question**
+
+**Paramètres :**
+- reponse_etudiant (texte de la réponse)
+- correction_prof (texte de la correction attendue)
+- points_max (nombre de points pour cette question)
+- numero_question (Q1, Q2, etc.)
+
+**Ce que la fonction fait :**
+1. **Construire un prompt pour l'IA** qui contient :
+   - Le rôle : "Tu es assistant de correction pour enseignant"
+   - La correction du prof (réponse attendue)
+   - La réponse de l'étudiant
+   - Le nombre de points maximum
+   - Les instructions :
+     - Compare le sens, pas les mots exacts
+     - Attribue des points selon la qualité
+     - Catégorise : REUSSIE (≥90%), PARTIELLE (30-89%), RATEE (<30%)
+     - Génère 3 types de feedback
+   - Le format de réponse attendu en JSON
+
+2. **Appeler l'API OpenAI** :
+   - Utilise le modèle GPT-4
+   - Envoie le prompt
+   - Configure temperature=0.3 (pour des réponses cohérentes)
+   - Demande une réponse en format JSON
+
+3. **Parser la réponse** :
+   - Récupère le JSON retourné
+   - Extrait :
+     - points_obtenus
+     - categorie (REUSSIE/PARTIELLE/RATEE)
+     - annotation_courte (≤15 mots)
+     - feedback_detaille (explication)
+     - conseil (astuce de révision)
+
+4. **Gérer les erreurs** :
+   - Si l'API échoue, retourne une correction par défaut avec 0 points
+   - Log l'erreur pour débugger
+
+**Comment savoir que ça marche :**
+- Le fichier ai_service.py existe
+- Tu peux l'importer sans erreur
+
+---
+
+## ✅ Étape 4.3 : Tester l'IA manuellement
+**Ce que tu fais :**
+- Crée un fichier de test : `test_ai.py`
+
+**Ce que le script doit faire :**
+1. Importer ai_service
+2. Définir une réponse test d'étudiant (exemple : "La photosynthèse produit de l'oxygène")
+3. Définir la correction prof (exemple : "La photosynthèse transforme CO2 + H2O + lumière en glucose + O2")
+4. Appeler corriger_question avec 5 points max
+5. Afficher le résultat JSON
+
+**Comment tester :**
+- Lance : `python test_ai.py`
+- Attends quelques secondes (appel API)
+- Tu dois voir un JSON avec :
+  - Points obtenus
+  - Catégorie
+  - Annotation courte
+  - Feedback détaillé
+  - Conseil
+
+**Comment savoir que ça marche :**
+- L'IA retourne une réponse cohérente
+- Les points sont logiques (pas 5/5 si la réponse est incomplète)
+- L'annotation est en français
+- Le conseil est pertinent
+
+**Si ça ne marche pas :**
+- Vérifie ta clé API dans .env
+- Vérifie que tu as des crédits sur ton compte OpenAI
+- Regarde les messages d'erreur dans le terminal
+
+---
+
+## ✅ Étape 4.4 : Créer le modèle de barème
+**Ce que tu fais :**
+- Dans `main.py`, ajoute une classe Pydantic pour le barème
+
+**Ce que cette classe doit contenir :**
+- note_totale : la note maximale (exemple : 20)
+- questions : un dictionnaire {"Q1": 5.0, "Q2": 3.0, "Q3": 4.0, etc.}
+
+**Créer aussi une classe pour la requête de correction :**
+- session_id : l'ID de la session
+- bareme : le barème défini ci-dessus
+
+**Comment savoir que ça marche :**
+- Les classes sont définies dans main.py
+- Elles utilisent Pydantic (validation automatique)
+
+---
+
+## ✅ Étape 4.5 : Créer le service de correction complet
+**Ce que tu fais :**
+- Dans `app/services/`, crée un fichier : `correction_service.py`
+
+**Ce que ce fichier doit faire :**
+
+**Fonction 1 : extraire_questions**
+- Prend un texte complet (extrait par OCR)
+- Prend le nombre de questions
+- Découpe le texte par numéro de question (Q1, Q2, etc.)
+- Utilise des expressions régulières (regex) pour trouver "Q1:", "Question 1:", etc.
+- Retourne un dictionnaire : {"Q1": "texte réponse 1", "Q2": "texte réponse 2", etc.}
+
+**Méthode simple :**
+- Cherche le pattern "Q1" ou "Question 1"
+- Prend tout le texte jusqu'au prochain "Q2"
+- Répète pour toutes les questions
+
+**Fonction 2 : corriger_copie** (la plus importante !)
+- Prend en paramètres :
+  - copie_path (chemin du fichier copie étudiant)
+  - correction_path (chemin du fichier correction prof)
+  - bareme (dictionnaire des points)
+
+**Ce qu'elle fait étape par étape :**
+
+1. **Extraire les textes** :
+   - Appelle ocr_service.extract_text sur la copie
+   - Appelle ocr_service.extract_text sur la correction
+   - Affiche "Extraction en cours..." pour suivre
+
+2. **Découper en questions** :
+   - Appelle extraire_questions sur le texte de la copie
+   - Appelle extraire_questions sur le texte de la correction
+   - Tu as maintenant deux dictionnaires : un pour l'étudiant, un pour le prof
+
+3. **Corriger chaque question** :
+   - Pour chaque question du barème (Q1, Q2, etc.) :
+     - Récupère la réponse de l'étudiant
+     - Récupère la correction du prof
+     - Récupère le nombre de points max
+     - Appelle ai_service.corriger_question
+     - Affiche "Correction Q1..." pour suivre
+     - Stocke le résultat
+
+4. **Calculer la note finale** :
+   - Somme tous les points_obtenus
+   - Calcule la note max (somme du barème)
+
+5. **Retourner les résultats** :
+   - Retourne un dictionnaire avec :
+     - resultats : liste de tous les résultats par question
+     - note_finale : total des points obtenus
+     - note_max : total des points possible
+
+**Comment savoir que ça marche :**
+- Le fichier correction_service.py existe
+- Tu peux l'importer sans erreur
+
+---
+
+## ✅ Étape 4.6 : Ajouter la route de lancement de correction
+**Ce que tu fais :**
+- Dans `main.py`, ajoute une route POST `/lancer-correction`
+
+**Ce que cette route doit faire :**
+1. Recevoir en paramètre :
+   - session_id
+   - bareme (avec note totale et points par question)
+
+2. Vérifier que la session existe
+3. Vérifier qu'il y a des copies et une correction uploadées
+4. Pour chaque copie dans la session :
+   - Afficher "Correction de copie_X.pdf..."
+   - Appeler correction_service.corriger_copie
+   - Stocker le résultat avec le nom du fichier
+
+5. Sauvegarder tous les résultats dans la session
+6. Changer le statut de la session en "completed"
+7. Retourner :
+   - Message de succès
+   - Nombre de copies corrigées
+   - Tous les résultats
+
+**Comment savoir que ça marche :**
+1. Upload des copies et une correction
+2. Va sur /docs
+3. Appelle /lancer-correction avec :
+   - Le session_id
+   - Un barème (exemple : {"note_totale": 20, "questions": {"Q1": 5, "Q2": 5, "Q3": 10}})
+4. Attends (ça peut prendre 1-2 minutes par copie)
+5. Tu dois voir les résultats avec :
+   - Les notes par question
+   - La note finale
+   - Les annotations et feedbacks
+
+**Problèmes courants :**
+- Si timeout : l'IA prend trop de temps → augmente le timeout
+- Si erreur "Pas de réponse" : le découpage des questions a échoué
+- Si points bizarres : le prompt IA n'est pas assez clair
+
+---
+
+## ✅ Étape 4.7 : Tester avec une copie complète
+**Ce que tu fais :**
+1. Prépare un PDF de test avec :
+   - 2-3 questions clairement numérotées (Q1, Q2, Q3)
+   - Des réponses de différentes qualités (une bonne, une moyenne, une mauvaise)
+
+2. Prépare la correction du prof avec :
+   - Les mêmes numéros de questions
+   - Les réponses attendues
+
+3. Upload les fichiers
+4. Lance la correction avec un barème cohérent
+5. Vérifie que :
+   - Toutes les questions sont détectées
+   - Les notes sont cohérentes
+   - Les feedbacks sont pertinents
+
+**Comment savoir que ça marche :**
+- Tu obtiens des résultats pour toutes les questions
+- Les notes sont logiques
+- Les commentaires sont en français et pertinents
+- Aucune erreur
+
+---
+
+# 📄 JOUR 9-10 : GÉNÉRATION DE RAPPORTS PDF (6-8 heures)
+
+## ✅ Étape 5.1 : Créer le service de rapports
+**Ce que tu fais :**
+- Dans `app/services/`, crée un fichier : `report_service.py`
+
+**Ce que ce fichier doit faire :**
+
+**Fonction principale : generer_rapport_pdf**
+
+**Paramètres :**
+- resultat : le dictionnaire de résultats d'une copie
+- output_path : où sauvegarder le PDF
+
+**Ce que la fonction fait :**
+
+1. **Créer le document PDF** :
+   - Utilise ReportLab
+   - Format A4
+   - Crée un document vide
+
+2. **Ajouter le titre** :
+   - "📝 RAPPORT DE CORRECTION"
+   - Nom du fichier de la copie
+   - Date
