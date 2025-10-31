@@ -1,0 +1,838 @@
+# 📱 GUIDE COMPLET ANGULAR 19 - FRONTEND CORRECTEUR AUTOMATIQUE
+## Version Sans Code - Architecture Professionnelle avec Signals
+
+---
+
+## 🎯 OBJECTIF FINAL
+Créer un frontend Angular 19 moderne qui :
+1. Communique avec votre API FastAPI existante
+2. Utilise les Signals pour le state management
+3. Applique une architecture propre et scalable
+4. Permet l'upload de fichiers et l'affichage des résultats
+5. Génère des rapports PDF des corrections
+
+---
+
+## 📚 NOUVEAUTÉS ANGULAR 19 (À CONNAÎTRE)
+
+### ✨ Standalone Components (Par défaut)
+**Ce que c'est :**
+- Plus besoin de créer des modules NgModule
+- Chaque composant s'importe directement
+- Plus simple et plus moderne
+
+**Avantages :**
+- Moins de fichiers à gérer
+- Code plus clair
+- Chargement plus rapide
+
+---
+
+### ⚡ Signals (State Management Natif)
+**Ce que c'est :**
+- Système de réactivité intégré à Angular
+- Remplace les Observables pour certains cas
+- Plus simple que RxJS pour gérer l'état
+
+**Concepts clés :**
+- **signal()** : Crée une valeur réactive
+- **computed()** : Calcule automatiquement une valeur dérivée
+- **effect()** : Réagit aux changements de signals
+
+**Quand utiliser :**
+- State local d'un composant → signal()
+- Calculs basés sur plusieurs signals → computed()
+- Actions à déclencher sur changement → effect()
+
+---
+
+### 🔀 Nouvelle Syntaxe de Contrôle (Control Flow)
+**Ce que c'est :**
+- Nouvelle façon d'écrire if, for, switch dans les templates
+- Plus lisible que les directives *ngIf, *ngFor
+
+**Exemples :**
+- `@if (condition) { ... }` remplace `*ngIf`
+- `@for (item of items; track item.id) { ... }` remplace `*ngFor`
+- `@switch (value) { @case ('a') { ... } }` remplace `*ngSwitch`
+
+---
+
+### 💉 inject() Function
+**Ce que c'est :**
+- Nouvelle façon d'injecter des dépendances
+- Plus besoin du constructor pour certains cas
+- Code plus compact
+
+**Avantages :**
+- Moins de boilerplate
+- Plus fonctionnel
+- Plus moderne
+
+---
+
+### 🎯 Route Inputs
+**Ce que c'est :**
+- Les paramètres de route deviennent des inputs automatiques
+- Plus besoin d'injecter ActivatedRoute
+- Plus simple et type-safe
+
+---
+
+### ⏳ @defer (Lazy Loading Amélioré)
+**Ce que c'est :**
+- Charge des composants uniquement quand nécessaire
+- Conditions multiples : viewport, interaction, timer
+- Gestion automatique des états loading/placeholder/error
+
+---
+
+## 🏗️ ARCHITECTURE DU PROJET
+
+### Principe : Separation of Concerns
+
+```
+┌──────────────────────────────────────────┐
+│     PRÉSENTATION (Components)            │
+│  - Affichage uniquement                  │
+│  - Reçoit données via Input              │
+│  - Émet événements via Output            │
+└───────────┬──────────────────────────────┘
+            │
+┌───────────▼──────────────────────────────┐
+│     SMART COMPONENTS (Containers)        │
+│  - Gère la logique métier                │
+│  - Utilise les services et stores        │
+│  - Orchestre les composants dumb         │
+└───────────┬──────────────────────────────┘
+            │
+┌───────────▼──────────────────────────────┐
+│     STATE MANAGEMENT (Stores)            │
+│  - Gère l'état global avec Signals       │
+│  - État immutable                        │
+│  - Computed pour dérivations             │
+└───────────┬──────────────────────────────┘
+            │
+┌───────────▼──────────────────────────────┐
+│     SERVICES (Business Logic)            │
+│  - Communication API                     │
+│  - Logique métier réutilisable           │
+│  - Transformations de données            │
+└───────────┬──────────────────────────────┘
+            │
+┌───────────▼──────────────────────────────┐
+│     API LAYER (HTTP)                     │
+│  - Appels HTTP vers FastAPI              │
+│  - Gestion des erreurs                   │
+│  - Intercepteurs                         │
+└──────────────────────────────────────────┘
+```
+
+---
+
+## 🚀 JOUR 1 : INSTALLATION ET CONFIGURATION (2-3 heures)
+
+### ✅ Étape 1.1 : Vérifier Node.js
+**Ce que tu fais :**
+- Ouvre un terminal
+- Tape : `node --version`
+- Tu dois voir : v18.19 ou v20.11 minimum
+
+**Si pas installé :**
+- Va sur nodejs.org
+- Télécharge la version LTS (Long Term Support)
+- Installe en suivant l'assistant
+
+**Comment savoir que ça marche :**
+- `node --version` affiche la version
+- `npm --version` affiche aussi une version
+
+---
+
+### ✅ Étape 1.2 : Installer Angular CLI 19
+**Ce que tu fais :**
+- Dans le terminal, tape : `npm install -g @angular/cli@latest`
+- Attends 1-2 minutes (téléchargement)
+
+**Ce qui se passe :**
+- Angular CLI s'installe globalement sur ton ordinateur
+- Tu pourras créer des projets Angular partout
+
+**Comment savoir que ça marche :**
+- Tape : `ng version`
+- Tu dois voir : Angular CLI: 19.x.x
+
+**Si erreur de permissions (Mac/Linux) :**
+- Ajoute `sudo` devant : `sudo npm install -g @angular/cli@latest`
+
+---
+
+### ✅ Étape 1.3 : Créer le projet Angular (SÉPARÉ du backend)
+**Ce que tu fais :**
+- Navigue vers le dossier parent de ton projet Python
+- Exemple : Si ton backend est dans `C:\Users\jacke\PycharmProjects\fastApiProject`
+- Va dans `C:\Users\jacke\PycharmProjects\`
+- Tape : `ng new correcteur-frontend`
+
+**Questions à répondre :**
+1. **Would you like to add Angular routing?** → Tape `Y` (Oui)
+2. **Which stylesheet format?** → Choisis `SCSS` (avec les flèches, Enter)
+3. **Enable Server-Side Rendering?** → Tape `N` (Non, pas besoin)
+
+**Ce qui se passe :**
+- Angular crée un nouveau dossier `correcteur-frontend`
+- Installe toutes les dépendances (2-3 minutes)
+- Configure le projet
+
+**Comment savoir que ça marche :**
+- Un dossier `correcteur-frontend` apparaît
+- Dedans, tu vois : `src/`, `angular.json`, `package.json`, etc.
+
+---
+
+### ✅ Étape 1.4 : Lancer le projet pour la première fois
+**Ce que tu fais :**
+- Entre dans le dossier : `cd correcteur-frontend`
+- Lance le serveur : `ng serve`
+- Attends que ça compile (30 secondes)
+
+**Ce qui se passe :**
+- Le serveur de développement démarre
+- Tu vois : "✔ Browser application bundle generation complete"
+- Puis : "Local: http://localhost:4200/"
+
+**Comment savoir que ça marche :**
+- Ouvre ton navigateur
+- Va sur : http:/code/localhost:4200
+- Tu vois la page d'accueil Angular (avec le logo)
+- C'est bon, Angular fonctionne !
+
+**Pour arrêter le serveur :**
+- Dans le terminal, fais : Ctrl+C
+
+---
+
+## 📁 JOUR 2 : STRUCTURE DES DOSSIERS (2-3 heures)
+
+### ✅ Étape 2.1 : Comprendre la structure initiale
+**Ce qui existe déjà :**
+
+```
+correcteur-frontend/
+├── src/
+│   ├── app/
+│   │   ├── app.component.ts     ← Composant racine
+│   │   ├── app.config.ts        ← Configuration app
+│   │   └── app.routes.ts        ← Routes (navigation)
+│   ├── assets/                  ← Images, icônes
+│   ├── environments/            ← Configuration env
+│   └── styles.scss              ← Styles globaux
+├── angular.json                 ← Config Angular
+├── package.json                 ← Dépendances npm
+└── tsconfig.json               ← Config TypeScript
+```
+
+**À retenir :**
+- `src/app/` : C'est là que tu vas travailler
+- `app.component.ts` : Le composant principal (garde-le)
+- `app.routes.ts` : Tu vas y définir tes routes
+- `environments/` : Pour les URLs de l'API (dev vs prod)
+
+---
+
+### ✅ Étape 2.2 : Créer la structure de dossiers professionnelle
+**Ce que tu fais :**
+Dans `src/app/`, crée ces dossiers (clic droit > New > Directory) :
+
+**1. Dossier `core/`** (Services globaux, singletons)
+- `core/services/` → Pour api.service, notification.service
+- `core/guards/` → Pour la protection des routes (plus tard)
+- `core/interceptors/` → Pour intercepter les requêtes HTTP
+- `core/config/` → Pour les constantes et configurations
+
+**2. Dossier `shared/`** (Composants réutilisables)
+- `shared/components/ui/` → Boutons, cartes, spinners
+- `shared/components/layout/` → Navbar, footer, sidebar
+- `shared/directives/` → Directives custom (drag & drop)
+- `shared/pipes/` → Pipes custom (formatage)
+- `shared/models/` → Interfaces communes
+
+**3. Dossier `features/`** (Modules fonctionnels)
+- `features/dashboard/` → Page d'accueil
+- `features/session/` → Gestion des sessions
+- `features/correction/` → Détails des corrections
+
+**Structure finale attendue :**
+```
+src/app/
+├── core/
+│   ├── services/
+│   ├── guards/
+│   ├── interceptors/
+│   └── config/
+├── shared/
+│   ├── components/
+│   │   ├── ui/
+│   │   └── layout/
+│   ├── directives/
+│   ├── pipes/
+│   └── models/
+├── features/
+│   ├── dashboard/
+│   ├── session/
+│   └── correction/
+├── app.component.ts
+├── app.config.ts
+└── app.routes.ts
+```
+
+**Comment savoir que ça marche :**
+- Tous ces dossiers existent dans `src/app/`
+- Ils sont vides pour l'instant (c'est normal)
+
+---
+
+### ✅ Étape 2.3 : Installer les dépendances UI
+**Ce que tu fais :**
+Choisis UNE de ces options (je recommande PrimeNG) :
+
+**Option 1 : PrimeNG (Recommandé)**
+```
+npm install primeng primeicons
+```
+- Bibliothèque UI riche
+- Composants prêts à l'emploi
+- Bien documentée
+
+**Option 2 : Angular Material**
+```
+ng add @angular/material
+```
+- Officiel Google
+- Design Material Design
+- Moins de composants avancés
+
+**Ce qui se passe :**
+- Les packages se téléchargent (1-2 minutes)
+- Les dépendances s'ajoutent à `package.json`
+
+**Comment savoir que ça marche :**
+- Aucune erreur rouge
+- Dans `package.json`, tu vois les nouvelles dépendances
+
+---
+
+### ✅ Étape 2.4 : Installer les utilitaires
+**Ce que tu fais :**
+Dans le terminal, tape :
+```
+npm install date-fns chart.js ng2-charts file-saver
+npm install @types/file-saver --save-dev
+```
+
+**Ce que c'est :**
+- `date-fns` : Manipulation facile des dates
+- `chart.js` : Pour les graphiques de statistiques
+- `ng2-charts` : Wrapper Angular pour Chart.js
+- `file-saver` : Pour télécharger les PDF
+
+**Comment savoir que ça marche :**
+- Installation sans erreur
+- Les packages apparaissent dans `package.json`
+
+---
+
+## 🌐 JOUR 3 : CONFIGURATION ENVIRONNEMENTS (2 heures)
+
+### ✅ Étape 3.1 : Configurer les environnements
+**Ce que tu fais :**
+Dans `src/environments/`, tu as déjà :
+- `environment.ts` (pour le développement)
+- `environment.prod.ts` (pour la production)
+
+**Dans `environment.ts`, définis :**
+- `production`: false (c'est du dev)
+- `apiUrl`: 'http://localhost:8001' (ton API FastAPI)
+- `apiTimeout`: 30000 (30 secondes)
+- `maxFileSize`: 10485760 (10 MB en bytes)
+- `supportedFormats`: ['.pdf', '.jpg', '.png']
+
+**Dans `environment.prod.ts`, définis :**
+- `production`: true
+- `apiUrl`: 'https://ton-api-production.com' (à changer plus tard)
+- Les mêmes autres paramètres
+
+**Pourquoi c'est important :**
+- En dev, tu testes sur localhost
+- En prod, tu pointeras vers ton serveur réel
+- Angular switche automatiquement selon le build
+
+**Comment savoir que ça marche :**
+- Les deux fichiers existent
+- Ils contiennent les bonnes URLs
+
+---
+
+### ✅ Étape 3.2 : Configurer TypeScript (Paths aliases)
+**Ce que tu fais :**
+Ouvre `tsconfig.json` à la racine du projet.
+
+**Ajoute dans `compilerOptions` :**
+- `"strict": true` (mode strict, plus sûr)
+- `"strictNullChecks": true` (évite les null/undefined)
+- `"paths"`: (pour importer facilement)
+  - `"@core/*"`: `["src/app/core/*"]`
+  - `"@shared/*"`: `["src/app/shared/*"]`
+  - `"@features/*"`: `["src/app/features/*"]`
+  - `"@env/*"`: `["src/environments/*"]`
+
+**Pourquoi c'est utile :**
+- Au lieu d'écrire : `import { ApiService } from '../../../core/services/api.service'`
+- Tu écris : `import { ApiService } from '@core/services/api.service'`
+- Plus propre, moins d'erreurs
+
+**Comment savoir que ça marche :**
+- Le fichier est sauvegardé
+- Aucune erreur dans le terminal
+
+---
+
+## 🔄 JOUR 4-5 : STATE MANAGEMENT AVEC SIGNALS (4-6 heures)
+
+### ✅ Étape 4.1 : Comprendre le pattern Store avec Signals
+**Architecture du Store :**
+
+**Un Store, c'est quoi ?**
+- Une classe qui contient l'état global de ton app
+- Utilise des Signals pour la réactivité
+- Toutes les données passent par le store
+
+**Structure d'un Store :**
+1. **State privé** (signal) : Les données brutes
+2. **Selectors publics** (computed) : Les données exposées en lecture seule
+3. **Actions** (méthodes) : Pour modifier l'état
+
+**Avantages :**
+- État centralisé (pas de props drilling)
+- Réactivité automatique (les composants se mettent à jour tout seuls)
+- Prévisible (un seul endroit pour les données)
+- Debuggable (tu vois tout ce qui se passe)
+
+---
+
+### ✅ Étape 4.2 : Créer le modèle de Session
+**Ce que tu fais :**
+Dans `features/session/`, crée un dossier `models/`.
+Dedans, crée un fichier : `session.model.ts`
+
+**Ce fichier doit définir :**
+
+**Interface Session :**
+- id: string (l'ID de session de ton API)
+- status: 'copies_uploaded' | 'epreuve_uploaded' | 'ready_to_correct' | 'correcting' | 'completed' | 'error'
+- epreuve: objet avec (filename, path) ou null
+- copies: tableau d'objets avec (nom_eleve, classe, texte_complet, pages_sources)
+- correction: objet avec (filename, path) ou null
+- created_at: string (date ISO)
+- results: tableau de résultats ou null
+
+**Interface Student (pour les copies) :**
+- nom_eleve: string
+- classe: string
+- texte_complet: string
+- pages_sources: number[]
+
+**Interface CorrectionResult :**
+- nom_eleve: string
+- classe: string
+- note_finale: number
+- details: tableau d'objets question/résultat
+
+**Pourquoi c'est important :**
+- TypeScript vérifie les types à la compilation
+- Autocomplete dans VS Code
+- Moins d'erreurs
+
+**Comment savoir que ça marche :**
+- Le fichier existe
+- Tu peux l'importer sans erreur
+
+---
+
+### ✅ Étape 4.3 : Créer le SessionStore
+**Ce que tu fais :**
+Dans `features/session/`, crée un dossier `store/`.
+Dedans, crée : `session.store.ts`
+
+**Ce que ce Store doit contenir :**
+
+**1. Interface SessionState (l'état complet) :**
+- sessions: tableau de Session
+- currentSession: Session ou null
+- loading: boolean
+- error: string ou null
+
+**2. La classe SessionStore avec :**
+
+**a) Signal privé d'état :**
+- Un signal qui contient tout le SessionState
+- État initial : tout vide/false/null
+
+**b) Selectors publics (computed) :**
+- sessions: retourne toutes les sessions
+- currentSession: retourne la session active
+- loading: retourne l'état de chargement
+- error: retourne l'erreur éventuelle
+- sessionCount: calcule le nombre de sessions
+- activeSessions: filtre les sessions non terminées
+- completedSessions: filtre les sessions terminées
+
+**c) Actions (méthodes pour modifier) :**
+- setSessions(sessions): remplace toutes les sessions
+- addSession(session): ajoute une nouvelle session
+- setCurrentSession(session): définit la session active
+- updateSessionStatus(id, status): change le statut d'une session
+- setLoading(loading): active/désactive le loading
+- setError(error): définit une erreur
+- reset(): remet tout à zéro
+
+**Architecture interne de chaque action :**
+1. Prendre le state actuel
+2. Le cloner (immutabilité !)
+3. Modifier la copie
+4. Mettre à jour le signal avec la nouvelle valeur
+
+**Pourquoi cette architecture :**
+- Immutabilité : l'ancien state n'est jamais modifié directement
+- Traçabilité : on voit chaque changement
+- Performance : Angular détecte facilement les changements
+
+**Comment savoir que ça marche :**
+- Le fichier existe
+- Tu peux l'injecter dans un composant sans erreur
+
+---
+
+### ✅ Étape 4.4 : Utiliser le Store dans un composant (Test)
+**Ce que tu fais :**
+Dans `app.component.ts` (juste pour tester), injecte le store.
+
+**Ce que tu dois faire :**
+1. Importer SessionStore
+2. L'injecter avec inject()
+3. Créer des propriétés qui utilisent les selectors
+4. Dans le template, afficher le nombre de sessions
+
+**Ce qui doit se passer :**
+- Le composant réagit automatiquement aux changements du store
+- Pas besoin de subscribe()
+- Les computed se recalculent automatiquement
+
+**Comment tester :**
+1. Lance `ng serve`
+2. Ouvre la console du navigateur (F12)
+3. Dans le composant, ajoute une session de test
+4. Le template se met à jour automatiquement
+
+**Comment savoir que ça marche :**
+- Le nombre de sessions s'affiche
+- Ça change quand tu modifies le store
+- Aucune erreur dans la console
+
+---
+
+## 🌐 JOUR 6-7 : SERVICES ET API (6-8 heures)
+
+### ✅ Étape 6.1 : Créer le service API central
+**Ce que tu fais :**
+Dans `core/services/`, crée : `api.service.ts`
+
+**Ce que ce service doit faire :**
+
+**Configuration :**
+- Injectable en "root" (singleton global)
+- Injecter HttpClient d'Angular
+- Récupérer l'URL de base depuis environment
+
+**Méthodes à créer :**
+
+**1. get<T>(endpoint: string) :**
+- Fait un GET vers baseUrl + endpoint
+- Ajoute un timeout (30 secondes)
+- Réessaie 1 fois en cas d'échec
+- Gère les erreurs avec handleError
+
+**2. post<T>(endpoint: string, data: any) :**
+- Fait un POST vers baseUrl + endpoint
+- Envoie les données en JSON
+- Gère les erreurs
+
+**3. postFile<T>(endpoint: string, formData: FormData) :**
+- POST spécial pour les uploads de fichiers
+- Accepte du FormData (pas du JSON)
+- Timeout plus long (60 secondes)
+- Gère les erreurs
+
+**4. put<T>(endpoint: string, data: any) :**
+- Met à jour des données existantes
+- Gère les erreurs
+
+**5. delete<T>(endpoint: string) :**
+- Supprime une ressource
+- Gère les erreurs
+
+**6. handleError (méthode privée) :**
+- Reçoit une erreur HTTP
+- Détermine si c'est une erreur client ou serveur
+- Log l'erreur dans la console
+- Retourne un Observable d'erreur
+
+**Pourquoi centraliser :**
+- Évite de répéter le code HTTP partout
+- Gestion d'erreur uniforme
+- Facile à debugger
+- Un seul endroit à modifier si l'API change
+
+**Comment savoir que ça marche :**
+- Le service existe
+- Tu peux l'injecter sans erreur
+- Les méthodes sont typées correctement
+
+---
+
+### ✅ Étape 6.2 : Créer le SessionService (Feature-specific)
+**Ce que tu fais :**
+Dans `features/session/services/`, crée : `session.service.ts`
+
+**Ce que ce service doit faire :**
+
+**Configuration :**
+- Injectable en "root"
+- Injecter ApiService
+- Injecter SessionStore
+
+**Méthodes à créer :**
+
+**1. uploadCopiesBundle(file: File) :**
+- Crée un FormData
+- Ajoute le fichier dedans
+- Active le loading dans le store
+- Appelle api.postFile('upload-copies-bundle', formData)
+- Quand ça réussit :
+  - Ajoute la session au store
+  - Définit comme session courante
+  - Désactive le loading
+- Si erreur :
+  - Stocke l'erreur dans le store
+  - Désactive le loading
+
+**2. uploadEpreuve(sessionId: string, file: File) :**
+- Crée un FormData
+- Appelle api.postFile(`upload-epreuve/${sessionId}`, formData)
+- Met à jour le status de la session dans le store
+
+**3. uploadCorrection(sessionId: string, file: File) :**
+- Même principe que uploadEpreuve
+- Endpoint : `upload-correction/${sessionId}`
+- Status final : 'ready_to_correct'
+
+**4. startCorrection(sessionId: string) :**
+- Appelle api.post(`corriger/${sessionId}`, {})
+- Met le status à 'correcting'
+- Retourne les résultats
+
+**5. getAllSessions() :**
+- Appelle api.get('sessions')
+- Transform la réponse (dictionnaire → tableau)
+- Stocke dans le store
+
+**6. downloadPDF(sessionId: string) :**
+- Appelle l'endpoint export-pdf
+- Retourne un Blob (fichier binaire)
+- Le composant s'occupera de le télécharger
+
+**Pourquoi ce service :**
+- Encapsule la logique métier des sessions
+- Fait le lien entre l'API et le Store
+- Les composants n'ont pas besoin de connaître l'API
+
+**Comment savoir que ça marche :**
+- Le service existe
+- Toutes les méthodes retournent des Observables
+- Tu peux l'injecter dans un composant
+
+---
+
+### ✅ Étape 6.3 : Configurer les intercepteurs HTTP
+**Ce que tu fais :**
+Dans `core/interceptors/`, crée : `auth.interceptor.ts`
+
+**Ce que cet intercepteur doit faire :**
+- Intercepter toutes les requêtes HTTP sortantes
+- Ajouter des headers communs :
+  - Content-Type: application/json (si nécessaire)
+  - Authorization: Bearer token (si tu ajoutes l'auth plus tard)
+- Logger les requêtes en mode dev
+
+**Dans `core/interceptors/`, crée aussi : `error.interceptor.ts`**
+
+**Ce qu'il doit faire :**
+- Intercepter toutes les réponses d'erreur
+- Selon le code d'erreur :
+  - 401 : Non autorisé → Rediriger vers login
+  - 404 : Non trouvé → Afficher notification
+  - 500 : Erreur serveur → Afficher notification
+  - Timeout : Afficher "Le serveur met trop de temps"
+- Retourner l'erreur pour que le service puisse la gérer aussi
+
+**Comment les activer :**
+Dans `app.config.ts`, ajoute-les aux providers HTTP.
+
+**Pourquoi c'est utile :**
+- Gestion centralisée des erreurs
+- Logs automatiques
+- Headers automatiques
+- Moins de code dans les services
+
+**Comment savoir que ça marche :**
+- Les intercepteurs existent
+- Ils sont enregistrés dans app.config.ts
+- Les requêtes passent par eux (vérifie dans l'onglet Network du navigateur)
+
+---
+
+## 🧩 JOUR 8-10 : COMPOSANTS (8-12 heures)
+
+### ✅ Étape 8.1 : Comprendre Smart vs Dumb Components
+
+**DUMB Components (Presentational) :**
+**Ce que c'est :**
+- Composants qui affichent uniquement
+- Reçoivent des données via @Input()
+- Émettent des événements via @Output()
+- Pas de logique métier
+- Pas d'appel aux services
+- Réutilisables partout
+
+**Exemple : StatsCard**
+- Input : title, value, icon, color
+- Output : aucun (juste affichage)
+- Utilisation : Afficher une statistique
+
+**SMART Components (Container) :**
+**Ce que c'est :**
+- Composants qui orchestrent
+- Utilisent les services
+- Lisent et modifient le store
+- Gèrent la logique métier
+- Passent les données aux composants dumb
+
+**Exemple : Dashboard**
+- Charge les données via SessionService
+- Lit le store
+- Passe les données à StatsCard
+- Gère les clics et navigation
+
+**Pourquoi cette séparation :**
+- Code plus propre
+- Composants dumb réutilisables
+- Facile à tester
+- Logique centralisée dans les smart
+
+---
+
+### ✅ Étape 8.2 : Créer les composants UI (Dumb)
+**Ce que tu fais :**
+Génère ces composants avec Angular CLI :
+
+```
+ng generate component shared/components/ui/button --standalone
+ng generate component shared/components/ui/card --standalone
+ng generate component shared/components/ui/spinner --standalone
+ng generate component shared/components/ui/progress-bar --standalone
+ng generate component shared/components/ui/file-uploader --standalone
+```
+
+**Pour chaque composant dumb :**
+
+**1. button.component.ts :**
+- @Input() label: string
+- @Input() type: 'primary' | 'secondary' | 'danger'
+- @Input() disabled: boolean
+- @Input() loading: boolean
+- @Output() clicked: EventEmitter
+- Template : Un bouton stylisé qui émet l'événement au clic
+
+**2. card.component.ts :**
+- @Input() title: string
+- @Input() subtitle: string optionnel
+- Template : Une carte avec titre et ng-content pour le contenu
+
+**3. spinner.component.ts :**
+- @Input() size: 'small' | 'medium' | 'large'
+- @Input() color: string
+- Template : Un loader animé (CSS)
+
+**4. progress-bar.component.ts :**
+- @Input() value: number (0-100)
+- @Input() color: string
+- Template : Une barre de progression
+
+**5. file-uploader.component.ts :**
+- @Input() accept: string ('.pdf,.jpg,.png')
+- @Input() maxSize: number
+- @Input() multiple: boolean
+- @Output() filesSelected: EventEmitter<File[]>
+- Template : Zone de drag & drop + bouton "Parcourir"
+- Validation des fichiers (taille, format)
+
+**Comment savoir que ça marche :**
+- Les composants existent dans `shared/components/ui/`
+- Chacun a son .ts, .html, .scss
+- Tu peux les importer dans un autre composant
+
+---
+
+### ✅ Étape 8.3 : Créer les composants Layout
+**Ce que tu fais :**
+```
+ng generate component shared/components/layout/navbar --standalone
+ng generate component shared/components/layout/sidebar --standalone
+ng generate component shared/components/layout/footer --standalone
+```
+
+**navbar.component.ts :**
+- Affiche le logo de l'app
+- Menu de navigation (Dashboard, Sessions, Aide)
+- Bouton de profil (optionnel)
+- Template : Header avec liens de navigation
+
+**sidebar.component.ts :**
+- Liste des sections de l'app
+- Highlight de la section active
+- Template : Menu latéral (optionnel, si tu veux)
+
+**footer.component.ts :**
+- Copyright
+- Liens utiles
+- Version de l'app
+- Template : Footer simple
+
+**Comment savoir que ça marche :**
+- Les composants existent
+- Tu peux les importer dans app.component
+
+---
+
+### ✅ Étape 8.4 :
+❌ session.service.ts (À FAIRE EN PREMIER)
+❌ notification.service.ts (Pour afficher les messages)
+```
+
+#### **PRIORITÉ 2 : Composants UI Réutilisables**
+```
+❌ button.component.ts
+❌ card.component.ts
+❌ spinner.component.ts
+❌ file-uploader.component.ts (CRUCIAL pour ton app)
+❌ progress-bar.component.ts
