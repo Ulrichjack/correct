@@ -1,48 +1,45 @@
+#!/usr/bin/env python3
 """
-Script de test pour l'extraction OCR.
-Place un PDF de test dans uploads/copies/ avant de lancer ce script.
+🧪 TEST OCR AVEC EASYOCR
+Plus léger que TrOCR, bon sur manuscrit
 """
 
-from app.services.ocr_service import extract_text, get_text_preview
+import sys
+import easyocr
+from PIL import Image
 
-# ====================================
-# CONFIGURATION
-# ====================================
+def tester_easyocr(image_path):
+    print("=" * 70)
+    print(f"🧪 TEST EASYOCR SUR : {image_path}")
+    print("=" * 70)
+    print("")
+    
+    print("🤖 Chargement du modèle EasyOCR (français)...")
+    reader = easyocr.Reader(['fr'], gpu=False, verbose=False)
+    
+    print(f"📸 Lecture de l'image...")
+    result = reader.readtext(image_path, detail=0, paragraph=True)
+    
+    texte = "\n".join(result)
+    
+    print("")
+    print("=" * 70)
+    print("📝 RÉSULTAT EXTRAIT :")
+    print("=" * 70)
+    print(texte)
+    print("")
+    print("=" * 70)
+    print(f"✅ Total : {len(texte)} caractères extraits")
+    print("=" * 70)
 
-# Remplace par le nom de ton fichier de test
-TEST_FILE = "uploads/copies/test.pdf"  # ← Change ici !
-
-# ====================================
-# TEST
-# ====================================
-
-print("=" * 60)
-print("🧪 TEST D'EXTRACTION OCR")
-print("=" * 60)
-
-# Extraire le texte
-print(f"\n📂 Fichier à traiter : {TEST_FILE}\n")
-text = extract_text(TEST_FILE)
-
-# Afficher les résultats
-print("\n" + "=" * 60)
-print("📊 RÉSULTATS")
-print("=" * 60)
-
-if text:
-    # Obtenir l'aperçu
-    preview = get_text_preview(text, max_chars=500)
-
-    print(f"\n✅ Extraction réussie !")
-    print(f"📏 Longueur totale : {preview['total_chars']} caractères")
-    print(f"📝 Nombre de mots : {preview['total_words']}")
-    print(f"📄 Nombre de lignes : {preview['total_lines']}")
-
-    print(f"\n📖 Aperçu (500 premiers caractères) :")
-    print("-" * 60)
-    print(preview['preview'])
-    print("-" * 60)
-else:
-    print("\n❌ Aucun texte extrait (fichier vide ou erreur)")
-
-print("\n" + "=" * 60)
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("❌ Usage : python3 test_ocr_easyocr.py <chemin_vers_fichier>")
+        print("")
+        print("Exemples :")
+        print("  python3 test_ocr_easyocr.py eleve15.jpg")
+        print("  python3 test_ocr_easyocr.py test_images/copie.jpg")
+        sys.exit(1)
+    
+    fichier = sys.argv[1]
+    tester_easyocr(fichier)

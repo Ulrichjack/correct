@@ -12,14 +12,21 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# Choix de l'IA à utiliser : "gemini", "deepseek" ou "groq"
-AI_PROVIDER = os.getenv("AI_PROVIDER", "groq")  # Par défaut : Gemini
+# Choix de l'IA à utiliser : "gemini" ou "groq"
+AI_PROVIDER = os.getenv("AI_PROVIDER", "groq")  # Par défaut : Groq
 
 # Configuration des modèles
 AI_MODELS = {
     "gemini": "gemini-pro",
     "groq": "llama3-8b-8192"
 }
+
+# ====================================
+# CONFIGURATION OCR
+# ====================================
+
+# ✅ NOUVEAU : Clé API OCR.space
+OCRSPACE_API_KEY = os.getenv("OCRSPACE_API_KEY", "K87899142388957")
 
 # ====================================
 # CONFIGURATION DES FICHIERS
@@ -37,20 +44,14 @@ UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
 # Sous-dossiers
 COPIES_FOLDER = os.path.join(UPLOAD_FOLDER, "copies")
 CORRECTIONS_FOLDER = os.path.join(UPLOAD_FOLDER, "corrections")
-EPREUVES_FOLDER = os.path.join(UPLOAD_FOLDER, "epreuves") # <--- NOUVELLE LIGNE
-EXPORTS_FOLDER = "exports"
-
-# Sous-dossiers
-COPIES_FOLDER = os.path.join(UPLOAD_FOLDER, "copies")
-
-CORRECTIONS_FOLDER = os.path.join(UPLOAD_FOLDER, "corrections")
+EPREUVES_FOLDER = os.path.join(UPLOAD_FOLDER, "epreuves")
 EXPORTS_FOLDER = "exports"
 
 # ====================================
-# CONFIGURATION TESSERACT (OCR)
+# CONFIGURATION TESSERACT (OCR) - DÉSACTIVÉ
 # ====================================
 
-# Chemin vers Tesseract
+# Chemin vers Tesseract (non utilisé avec OCR.space)
 TESSERACT_PATH = os.getenv("TESSERACT_PATH", "tesseract")
 
 # ====================================
@@ -65,7 +66,7 @@ CORS_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173"
+    "http://127.0.0.1:5173",
+    "http://localhost:4200",
+    "http://127.0.0.1:4200"
 ]
-
-

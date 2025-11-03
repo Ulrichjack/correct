@@ -13,6 +13,7 @@ from app.services.correction_service import lancer_correction_automatique
 from app.services.report_service import generer_rapport_consolide_pdf
 from app.database import sessions
 from app.services.split_copies_service import decouper_copies_par_eleve
+from app.services.ocr_hybrid_service import print_quota_status
 
 app = FastAPIOffline(
     title="API Correction Automatique",
@@ -22,11 +23,7 @@ app = FastAPIOffline(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:4200",
-        "http://127.0.0.1:4200"
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,7 +37,11 @@ async def startup_event():
     os.makedirs(CORRECTIONS_FOLDER, exist_ok=True)
     os.makedirs(EPREUVES_FOLDER, exist_ok=True)
     os.makedirs("exports", exist_ok=True)
+    
     print("🚀 Démarrage de l'API de correction automatique.")
+    
+    # ✅ AFFICHER LE QUOTA OCR.SPACE
+    print_quota_status()
 
 
 @app.on_event("shutdown")
@@ -75,7 +76,6 @@ def list_sessions():
     }
 
 
-# ✅ NOUVEAU : Endpoint pour récupérer les détails complets d'une session
 @app.get("/sessions/{session_id}")
 def get_session_details(session_id: str):
     """Récupère les détails complets d'une session spécifique"""
@@ -183,7 +183,6 @@ def export_pdf_consolide(session_id: str):
 
     pdf_path = generer_rapport_consolide_pdf(resultats, output_filename)
 
-    # ✅ FIX : Retourner juste le nom du fichier, pas le chemin complet
     return {"pdf_consolidated_report": output_filename}
 
 
@@ -201,26 +200,18 @@ def delete_session(session_id: str):
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session introuvable.")
 
-    # ✅ OPTIONNEL : Bloque si terminée
     if sessions[session_id].get("status") == "corrected":
         raise HTTPException(status_code=400, detail="Impossible de supprimer une session terminée.")
 
-    # 🧹 Nettoie fichiers (ajoute import shutil)
     import shutil
     session_data = sessions[session_id]
 
-    # Supprime fichiers spécifiques
     for file_key in ["epreuve", "correction"]:
         if file_key in session_data and session_data[file_key]:
             file_path = session_data[file_key]["path"]
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-    # Supprime dossier copies de cette session (si tu en as un par session)
-    # copies_dir = os.path.join(COPIES_FOLDER, session_id)
-    # if os.path.exists(copies_dir): shutil.rmtree(copies_dir)
-
-    # 🗑️ Supprime de DB
     del sessions[session_id]
 
     return {"message": "Session supprimée avec succès."}

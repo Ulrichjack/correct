@@ -1,63 +1,73 @@
 import os
 from collections import defaultdict
 
-# Importer les fonctions nécessaires depuis les autres services
-from .ocr_service import extract_text_per_page
-from .extract_utils import extraire_nom_et_classe
+from .ocr_hybrid_service import extract_text_from_file
+from .ai_extract_service import extraire_nom_classe_avec_ia  # ✅ IA
 
 
-def decouper_copies_par_eleve(pdf_path: str) -> dict:
+def decouper_copies_par_eleve(file_path: str) -> dict:
     """
-    Analyse un PDF contenant plusieurs copies et les regroupe par élève.
-
-    Cette fonction parcourt un fichier PDF page par page, identifie à quel élève
-    chaque page appartient en se basant sur le nom et la classe, puis regroupe
-    ces pages.
-
-    Args:
-        pdf_path: Le chemin vers le fichier PDF groupé.
-
-    Returns:
-        Un dictionnaire où les clés sont des tuples (nom_eleve, classe)
-        et les valeurs sont des listes de dictionnaires de pages.
-        Exemple de retour :
-        {
-            ("Jean Dupont", "CM2"): [
-                {"page_num": 1, "texte": "Texte de la page 1..."},
-                {"page_num": 2, "texte": "Texte de la page 2..."}
-            ]
-        }
+    Analyse un fichier (PDF ou IMAGE) et regroupe par élève.
+    Utilise OCR hybride + IA pour l'extraction du nom/classe.
     """
-    print(f"📖 Découpage du fichier de copies : {os.path.basename(pdf_path)}")
-
-    # 1. Extraire le texte de chaque page du PDF
-    textes_par_page = extract_text_per_page(pdf_path)
-    if not textes_par_page:
-        print("❌ Aucune page n'a pu être extraite du PDF.")
+    print(f"\n{'='*60}")
+    print(f"📖 Découpage du fichier de copies")
+    print(f"{'='*60}")
+    print(f"📁 Fichier : {os.path.basename(file_path)}")
+    
+    # ÉTAPE 1 : OCR
+    print(f"🔍 Extraction du texte avec OCR hybride...")
+    texte_complet = extract_text_from_file(file_path, force_mode=None)
+    
+    if not texte_complet:
+        print("❌ Aucun texte extrait.")
         return {}
 
-    # 2. Regrouper les pages par élève
-    # defaultdict simplifie l'ajout d'éléments à une liste dans un dictionnaire
+    print(f"  ✅ Texte extrait : {len(texte_complet)} caractères")
+    
+    # ÉTAPE 2 : Séparer pages
+    if file_path.lower().endswith(('.jpg', '.jpeg', '.png')):
+        textes_par_page = [texte_complet]
+    else:
+        textes_par_page = texte_complet.split("--- PAGE SUIVANTE ---")
+        textes_par_page = [t.strip() for t in textes_par_page if t.strip()]
+    
+    print(f"  ✅ {len(textes_par_page)} page(s) détectée(s)")
+
+    # ÉTAPE 3 : Identifier élèves avec IA
+    print(f"\n🤖 Identification des élèves avec IA...")
+    
     groupes = defaultdict(list)
     dernier_eleve_identifie = None
 
     for i, texte_page in enumerate(textes_par_page):
         page_num = i + 1
-        nom, classe = extraire_nom_et_classe(texte_page)
-
-        # Si un nom est trouvé, on considère que c'est une nouvelle copie
+        print(f"\n  📄 Page {page_num} :")
+        
+        # ✅ IA pour extraire nom/classe
+        nom, classe = extraire_nom_classe_avec_ia(texte_page)
+        
         if nom != "Eleve inconnu":
             dernier_eleve_identifie = (nom, classe)
-
-        # Si aucun nom n'est trouvé sur cette page, on l'attribue à la dernière copie identifiée
+            print(f"     ✅ Nouvel élève → {nom} ({classe})")
+        
         if dernier_eleve_identifie:
             groupes[dernier_eleve_identifie].append({
                 "page_num": page_num,
                 "texte": texte_page
             })
-            print(f"  - Page {page_num} attribuée à {dernier_eleve_identifie[0]}")
         else:
-            print(f"  - ⚠️ Page {page_num} ignorée car aucun élève n'a pu être identifié.")
+            dernier_eleve_identifie = (f"Eleve_{page_num}", "Classe inconnue")
+            groupes[dernier_eleve_identifie].append({
+                "page_num": page_num,
+                "texte": texte_page
+            })
 
-    print(f"✅ Découpage terminé. {len(groupes)} élèves détectés.")
+    # RÉSUMÉ
+    print(f"\n{'='*60}")
+    print(f"✅ Découpage terminé - {len(groupes)} élève(s)")
+    for (nom, classe), pages in groupes.items():
+        print(f"  - {nom} ({classe}) : {len(pages)} page(s)")
+    print(f"{'='*60}\n")
+    
     return dict(groupes)
